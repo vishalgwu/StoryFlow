@@ -6,13 +6,13 @@ The writer retains final authority over the prose and the facts of the story.
 
 ## Current status
 
-**Phase 2 complete: immutable history and visual branches.** The local editor now includes a branch tree/list, independent story paths, revision inspection and comparison, safe restore, archive/reopen, and exports that preserve the full history graph. Phase 1 editing, recovery, validation, and storage-failure safeguards remain in place. See [verification](VERIFICATION.md) for acceptance evidence and limitations.
+**Phase 3 complete for the local memory workflow.** Writers can propose, inspect, edit, approve, and dismiss source-linked facts; track narrative validity and character knowledge; and prepare budgeted context with explanations. Branches retain independent memory decisions, stale evidence is excluded, and exports preserve memory and its history. Earlier editor and branch safeguards remain in place. See [verification](VERIFICATION.md) for acceptance evidence and limitations.
 
-Story memory, continuity review, steering controls, and real model providers remain planned. The continuation demo returns a fixed, explicitly labeled sample and makes no AI service calls.
+Continuity review, steering controls, and real model providers remain planned. Memory extraction uses local sentence/keyword rules, and retrieval uses entities, keywords, and a small synonym lexicon. These are inspectable baselines, not an LLM or learned semantic embedding system. The offline continuation demo consumes a captured context and reuses its first approved claim when available; it makes no AI service calls.
 
 ### Progress checkpoint
 
-**Phases 0–2 are complete for the browser-only foundation and branch workflow. The next milestone is Phase 3: evidence-backed story memory.** Progress is tracked by acceptance gates; there is no measured whole-project completion percentage. Memory, continuity review, real AI, steering, and evaluation remain ahead.
+**Phases 0–3 are complete for the browser-only editor, branch, and local memory workflows. The next milestone is Phase 4: bounded continuity review.** Progress is tracked by acceptance gates; there is no measured whole-project completion percentage. Continuity review, real AI, learned semantic retrieval, steering, and evaluation remain ahead.
 
 What works now:
 
@@ -20,12 +20,14 @@ What works now:
 - One active project with multiple independent branches, title/paragraph editing, stable paragraph IDs, IndexedDB autosave, and explicit save status.
 - Explicit paragraph save/cancel, recovery checkpoints for unapplied edits, and branch-local undo/redo that appends immutable recovery revisions and survives reload.
 - Named branches, nested visual/list exploration, fork from an earlier revision, revision comparison, and recoverable restore. Archived branches keep their history and can be reopened.
-- Schema-v2 exports preserve revisions, paragraph versions, fork origins, branch heads, archive states, and recovery pointers. Schema-v1 projects and Phase 1 browser records migrate automatically.
+- Schema-v3 exports preserve revisions, paragraph versions, branches, archive states, recovery pointers, memory versions, source spans, and captured generation context. Schema-v1/v2 projects and released browser records migrate automatically.
+- Pending/accepted/dismissed memory for characters, locations, relationships, world rules, events, threads, and knowledge. Established facts, inferences, and author plans remain distinct.
+- Branch-specific fact decisions, inclusive narrative-time ranges, reader/character knowledge, stale-evidence revalidation, and inspectable context inclusion/exclusion reasons.
 - A streamed offline sample with cancellation, checkpointed partial/stale output, and project/branch/revision ownership checks. Interrupted output is restored as a proposal, never automatically appended.
 - Retryable save errors, preservation of unreadable stored data, and a single-tab editing lock.
-- Twenty-four passing Node regression tests and sixteen automated browser acceptance scenarios, plus a CI workflow. See [verification](VERIFICATION.md) for exact results and environment limits.
+- Forty-three Node regression tests and twenty-five automated browser acceptance scenarios, plus a CI workflow. See [verification](VERIFICATION.md) for exact results and environment limits.
 
-Next, add proposed facts linked to immutable source passages, writer approval, and retrieval filtered by branch ancestry in Phase 3. Real model integration and visual steering still need implementation before the intended AI-writing workflow can be demonstrated end to end.
+Next, build a bounded continuity reviewer that retrieves evidence, emits inspectable findings, and proposes edits requiring writer approval. Real model integration and visual steering still need implementation before the intended AI-writing workflow can be demonstrated end to end.
 
 The blueprint uses **Story Steer Studio** as the product name; **StoryFlow** is the repository name. Its references to an earlier prototype and historical test results are design context, not implemented features or verification results for this repository.
 
@@ -94,7 +96,7 @@ The implementation uses browser-native JavaScript modules, HTML/CSS, IndexedDB, 
 | 0 | Independent scaffold and documented stack | Complete | App runs locally and its own checks pass |
 | 1 | Editor integrity, persistence validation, undo, cancellation | Complete for the local single-draft scope | Save/cancel, undo/reload, import safety, cancellation, stale ownership, and storage-failure scenarios pass automated checks |
 | 2 | Immutable revisions and visual branches | Complete for the local branch workflow | Fork, compare, restore, migration, and export preserve independent histories; browser switching cannot accept stale completions |
-| 3 | Approved, passage-linked story memory | Not started | Relevant facts are retrieved; wrong-branch facts are excluded; stale evidence is visible |
+| 3 | Approved, passage-linked story memory | Complete for the local baseline | Approval/evidence links, distant retrieval, branch/time/knowledge filtering, stale revalidation, context budgets, and persistence are tested |
 | 4 | Bounded continuity review | Not started | Findings cite evidence and patches require approval and valid preconditions |
 | 5 | Evaluation, accessibility, and release polish | Not started | The main writing journey works end to end and claims match measured results |
 
@@ -117,6 +119,8 @@ StoryFlow/
 |-- src/domain.js                    Project validation and reversible editing
 |-- src/history.js                   Immutable revision graph and branch rules
 |-- src/explorer.js                  Branch tree, revision inspection, and comparison UI
+|-- src/memory.js                    Memory lifecycle, evidence, retrieval, and budgets
+|-- src/memoryui.js                  Approval queue, evidence inspector, and context preview
 |-- src/session.js                   Validated recovery snapshots and migration
 |-- src/storage.js                   IndexedDB persistence
 |-- src/generation.js                Request ownership and offline fixture
@@ -154,7 +158,7 @@ Open **http://127.0.0.1:4173** in a current browser with IndexedDB and Web Locks
 - **Retry saving** becomes available after a failed write. Export a backup while storage is unavailable.
 - A second tab opens read-only while another tab owns the draft. Close the owner and reload the other tab to edit there.
 
-Export a project JSON backup before clearing browser data or replacing a project. Export preserves the entire branch/revision graph; a visible unapplied edit becomes an export-only revision without changing the editor. If an edit cannot fit within the history limits, Export project backs up the committed graph and explicitly asks you to use **Export edit text** for the pending words. The separate sample panel still needs **Export sample text**. Import and **New project** keep one previous-project recovery copy for immediate Undo/Redo; that copy is replaced by the next project replacement and cleared by an edit or branch mutation.
+Export a project JSON backup before clearing browser data or replacing a project. Export preserves the entire branch/revision graph; a visible unapplied edit becomes an export-only revision without changing the editor. If an edit cannot fit within the history limits, Export project backs up the committed graph and explicitly asks you to use **Export edit text** for the pending words. The separate sample panel still needs **Export sample text**. Import and **New project** keep one previous-project recovery copy for immediate Undo/Redo; that copy is replaced by the next project replacement and cleared by a prose, branch, or memory mutation.
 
 ### Explore branches and history
 
@@ -166,6 +170,22 @@ Export a project JSON backup before clearing browser data or replacing a project
 6. To rename the active branch, enter a name and choose **Rename active branch**. Switch away before archiving it. **Reopen** makes an archived path available again without deleting its history.
 
 Running output stays owned by its original branch. Switching away and back still makes it stale; adding a retained sample requires an explicit action on its original branch.
+
+### Use evidence-backed story memory
+
+1. Save your prose, then choose **Suggest facts from draft**. Up to 40 local candidates are proposed per run. They quote saved sentences; suggested categories and entity names need writer review.
+2. Alternatively, choose an **Evidence passage**, select a quote in the saved passage, and choose **Propose selected evidence**. With no selection, the whole passage is used, up to 2,000 characters.
+3. Use **Open evidence** to inspect the immutable source paragraph with the exact support highlighted. Expand the card to edit its claim, category, type, entities, narrative-time range, and character knowledge.
+4. Choose **Approve memory**, **Dismiss memory**, or **Save proposal changes**. Saving changed fields resets approval to pending. Accepted plans and inferences are retained as separate records and are never authoritative continuation constraints. Only accepted facts can be locked.
+5. Set a topic/entity query, a writer-assigned narrative time step, and an optional character viewpoint; blank viewpoint means reader. Time ranges include both endpoints. Unspecified character knowledge is unknown, not automatically shared.
+6. Choose **Prepare context** to inspect facts included/excluded and why, source citations, recent prose excerpts, and the exact prepared context. The UTF-8 byte count is a conservative input-token estimate, not provider usage. Required instructions and eligible locked facts must fit the budget or the request is blocked.
+7. **Try sample continuation** captures that context. The offline fixture reuses the first included claim, or the original lighthouse sample if none is included. **Inspect sample context** shows the original snapshot even after later memory changes.
+
+Changing a supporting paragraph marks its facts stale. **Revalidate evidence** links the unchanged quote to its current passage version and resets approval; approve again after review. If the quote is gone or ambiguous, select fresh evidence and propose a new record. Undoing prose to its original version can make that exact source current again.
+
+A fork copies the current decision versions available at its selected revision. Later parent/sibling decisions do not leak into it. Child approval/dismissal changes only that branch. Historical forks walk earlier fact decisions when later decisions belong to later revisions. Decisions made at the same prose revision use the current decision at that revision; memory decisions do not create separate prose revisions.
+
+Memory form fields are saved only by **Save proposal changes** or **Approve memory**. Up to 100 in-memory form drafts are retained during navigation/rerenders, including focus preservation; they are not reload recovery or export data. Prose undo/redo does not undo memory decisions; make another explicit memory decision to revise one.
 
 ```sh
 npm run check
@@ -189,12 +209,14 @@ The server is for local development and serves only application assets. It is no
 
 - One active draft per browser origin, with a Web Lock preventing concurrent editing in multiple tabs. Browsers without Web Locks open read-only.
 - Each branch keeps up to 50 undo/redo action pointers. Immutable revisions and passage versions are not pruned. The old Phase 1 recovery format's 8 MB history budget applies only when reading legacy records.
-- Project JSON is schema version 2, with limits of 20 MB, 50 branches, 5,000 revisions, and 20,000 paragraph versions. Each revision retains the 2 MB draft budget with up to 200 paragraphs of 20,000 characters each. At a limit, the attempted mutation is refused without deleting history; export and use **New project** to continue separately.
-- Schema-v1 imports are still supported and migrated. Unknown fields, broken references, cycles, sibling ancestry leaks, duplicate IDs, and unsupported records are rejected before replacement.
+- Project JSON is schema version 3, with limits of 20 MB, 50 branches, 5,000 revisions, 20,000 paragraph versions, 2,000 memory decision versions, and 500 current memory records per branch. Each prose revision retains the 2 MB/200-paragraph/20,000-character limits. At a cap, mutation is refused without deleting history; export and use **New project** to continue separately.
+- Schema-v1/v2 imports are supported and migrated without inventing memory. Unknown fields, broken references, cycles, sibling ancestry leaks, altered evidence, duplicate IDs, and unsupported records are rejected before replacement.
 - Import/New project require confirmation and retain one immediate project-replacement undo copy. This backup can add another 20 MB to browser storage, but is not included in portable exports. Export first for a durable backup.
 - Checkpoints are periodic, not a guarantee against losing the latest keystroke or streamed word during a crash. Wait for the saved indicator or export before closing. Starting a new run replaces the saved sample panel after confirmation when needed.
 - Storage failures are surfaced; if stored data cannot be restored, saving is disabled to avoid overwriting it. Export any new work before closing.
 - Browser storage may be evicted. There is no cross-device sync, hosted backend, service-worker offline reload guarantee, or paid/live model integration.
+- Local extraction does not verify truth or reliably resolve negation, pronouns, aliases, narrative time, or who knows a fact. Writers set those fields. Learned embeddings, model-based extraction, and claims of retrieval/continuity improvement remain future work.
+- Knowledge filtering applies to retrieved memory; recent source prose is still story context and is not semantically redacted. Locking does not override branch, time, or knowledge eligibility. No live model adherence guarantee is claimed.
 
 ## License
 

@@ -28,10 +28,10 @@
     <aside>
       <p class="eyebrow">THE NEXT POSSIBILITY</p><h1>A little momentum.</h1>
       <p>Try a sample continuation, then make it your own. Your current draft stays editable while it runs.</p>
-      <div class="notice"><strong>Offline template demo</strong><p>This fixed sample is not AI-generated in this session and does not respond to your story. No model or network service is called.</p></div>
+      <div class="notice"><strong>Offline template demo</strong><p>This deterministic sample reuses an approved memory claim when available; otherwise it returns the fixed lighthouse example. No AI model or network service is called.</p></div>
       <button id="generate" class="primary" disabled>Try sample continuation</button><button id="stop" disabled>Stop</button>
       <p id="run-status" role="status">Ready when you are.</p>
-      <section id="proposal" hidden><h2>Recoverable sample</h2><p id="proposal-origin" class="hint"></p><p id="preview"></p><button id="keep" disabled>Add to current draft</button><p class="hint">Samples are checkpointed in this browser. A new run replaces this panel; export the sample text to keep a separate copy.</p><button id="download-partial">Export sample text</button></section>
+      <section id="proposal" hidden><h2>Recoverable sample</h2><p id="proposal-origin" class="hint"></p><p id="preview"></p><button id="keep" disabled>Add to current draft</button><button id="sample-context" hidden>Inspect sample context</button><p class="hint">Samples are checkpointed in this browser. A new run replaces this panel; export the sample text to keep a separate copy.</p><button id="download-partial">Export sample text</button></section>
       <hr><h2>Keep a copy</h2><p>Browser storage can be cleared. Export a backup of your draft.</p>
       <button id="export" disabled>Export project</button><button id="import" disabled>Import project</button><input id="file" type="file" accept=".json,application/json" hidden>
       <button id="new-project" disabled>New project</button>
@@ -44,6 +44,19 @@
         <section aria-label="Revision explorer"><h3>Revision history</h3><label for="revision-select">Inspect a revision</label><select id="revision-select"></select><p id="revision-info" class="hint"></p><pre id="revision-preview"></pre><div class="history-actions"><button id="fork-revision" disabled>Fork selected revision</button><button id="restore-revision" disabled>Restore selected revision</button></div><p class="hint">Restore creates a new revision. All later writing remains in history. Undo and redo also create recovery revisions.</p></section>
       </div>
       <section class="comparison" aria-label="Compare revisions"><h3>Compare two revisions</h3><div class="comparison-controls"><label>From<select id="compare-left"></select></label><label>To<select id="compare-right"></select></label><button id="compare">Compare revisions</button></div><div id="comparison-result" aria-live="polite"></div></section>
+    </section>
+    <section class="memory-panel" aria-label="Story memory">
+      <p class="eyebrow">KNOW WHAT YOUR STORY KNOWS</p><h2>Memory with a source.</h2>
+      <p class="hint">Suggestions stay pending until you approve them. Plans and inferences remain separate from established facts. Decisions apply to this branch and its future forks. Memory fields save when you choose Save proposal changes or Approve memory; unsaved form fields are not included in project backups.</p>
+      <div class="memory-grid">
+        <section aria-label="Propose memory"><h3>Start with the evidence</h3><label for="memory-passage">Evidence passage</label><select id="memory-passage"></select><textarea id="memory-source" aria-label="Saved evidence passage" readonly rows="5"></textarea><div class="history-actions"><button id="memory-extract" disabled>Suggest facts from draft</button><button id="memory-propose" disabled>Propose selected evidence</button></div><p class="hint">Extraction uses local sentence and keyword rules, not an AI model. Select text above for a precise quote, or propose the whole passage (up to 2,000 characters).</p></section>
+        <section aria-label="Memory retrieval"><h3>Prepare the next continuation</h3><label for="memory-query">Relevant entities or topic</label><input id="memory-query" maxlength="500" placeholder="Elara, key, sunrise"><label for="memory-time">Narrative time step</label><input id="memory-time" type="number" min="0" max="1000000" value="0"><label for="memory-viewpoint">Character viewpoint (blank means reader)</label><input id="memory-viewpoint" maxlength="80" placeholder="Reader"><label for="memory-budget">Context budget (estimated input tokens)</label><input id="memory-budget" type="number" min="256" max="16000" value="4096"><button id="memory-prepare">Prepare context</button><p class="hint">Time steps are writer-assigned, inclusive ranges. Retrieval uses entities, keywords, and a small local synonym lexicon. Token counts use UTF-8 bytes as a conservative estimate, not provider usage.</p></section>
+      </div>
+      <p id="memory-status" role="status"></p>
+      <label for="memory-filter">Show memory</label><select id="memory-filter"><option value="all">All on this branch</option><option value="pending">Pending approval</option><option value="accepted">Accepted</option><option value="stale">Stale evidence</option><option value="dismissed">Dismissed</option></select>
+      <p id="memory-count" class="hint"></p><div id="memory-cards"></div><div class="history-actions"><button id="memory-prev">Previous memory page</button><button id="memory-next">Next memory page</button></div>
+      <section id="memory-evidence" aria-label="Memory evidence" tabindex="-1" hidden><h3>Original supporting passage</h3><p id="memory-evidence-info" class="hint"></p><p id="memory-evidence-text"></p></section>
+      <section id="memory-context" aria-label="Prepared context" hidden><h3>Why this context?</h3><p id="memory-context-status" role="status"></p><ul id="memory-included"></ul><details><summary>Excluded memory and reasons</summary><ul id="memory-omitted"></ul></details><details><summary>Inspect exact context</summary><pre id="memory-context-text"></pre></details></section>
     </section>
   </main>
   <p id="error" class="error" role="alert" hidden></p>

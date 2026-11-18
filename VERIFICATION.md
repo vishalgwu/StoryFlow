@@ -1,4 +1,60 @@
-# Phase 2: immutable history and branches — verification
+# Phase 3: evidence-backed local memory — verification
+
+## Release gate and scope
+
+The local memory workflow is implemented: exact evidence, pending approval, writer correction/dismissal, branch-specific decisions, narrative-time validity, per-character knowledge, stale-source revalidation, distant fact retrieval, inspectable budgets/context, and persistence/export. The extraction/retrieval implementation is a deterministic local baseline. Learned embeddings, LLM extraction, live model inference, and measured quality improvements are not claimed.
+
+## Automated checks
+
+- `npm run check`: syntax checks and **43 Node tests**.
+- `npm run test:browser` with installed Chrome on Windows: **25 browser scenarios**, including 9 memory scenarios and the 16 prior editor/branch regressions.
+- `git diff --check`: required before commit.
+
+### Memory acceptance evidence
+
+| Requirement | Coverage |
+| --- | --- |
+| Proposals do not become truth silently | Extraction/manual proposals start pending; only accepted facts enter authoritative context |
+| Source links resolve | Exact revision, paragraph version, start/end, and quoted text are validated; browser evidence inspector highlights the original quote |
+| Correction and decisions | Edits append a pending version; approval/dismissal preserves immutable decision history; repeated unchanged approval retains its lock |
+| Branch isolation | Child decisions do not rewrite parent decisions; later parent/sibling facts stay excluded; historical forks recover earlier eligible decision versions |
+| Narrative time | Inclusive writer-assigned validity bounds are tested before, inside, and after a range |
+| Character knowledge | Reader, knows, does-not-know, and unknown states are tested separately |
+| Plans and inferences | Accepted non-fact records stay out of authoritative continuation constraints and cannot be locked |
+| Stale evidence | Changed/deleted source versions exclude a fact; current-quote revalidation returns it to pending for another approval |
+| Distant retrieval | An early fact remains retrievable after 30 unrelated later passages using entity/keyword/local synonym relevance |
+| Budget enforcement | Required instructions and eligible locks block preparation if they cannot fit; included/excluded reasons and exact context remain inspectable |
+| Generation integration | Offline fixture consumes the captured approved claim; the revision records that exact context; later memory decisions invalidate an in-flight operation |
+| Persistence and migration | Memory, decision links, and manifests survive export/import/reload; schema-v2 migration preserves history IDs and invents no facts |
+| Defensive validation | Altered quotes/spans, invalid knowledge, foreign scope, cyclic history, prompt tampering, and parent-only context decisions are rejected |
+| UI reliability | Unsaved form values/open state/focus survive an unrelated rerender; unsaved fields remain explicitly outside backups/reload recovery |
+
+The earlier failed textarea check queried text content instead of its value; it was corrected to assert the displayed value. A missing exact accessible label on a nested select was fixed. A stale-approval test also caught a no-op guard running too early; stale evidence is now checked before an unchanged approval can return.
+
+## Manual visual verification
+
+The in-app browser migrated the existing Phase 2 project with its original prose and branches intact. On a separate Memory walkthrough branch, a saved passage was proposed, its category/entities/character knowledge were reviewed, and the record was approved. The original quote was highlighted in the evidence inspector; context preparation included the accepted fact with a relevance explanation and an estimated budget. Returning to Main showed zero memory records, preserving branch isolation. There were no warning/error console entries in this normal flow. A local screenshot was recorded separately from source code. Branch switches clear ordinary context previews; explicit sample-context inspection labels the captured source branch.
+
+## Reproduce and limits
+
+```sh
+npm ci
+npm run check
+npx playwright install chromium
+npm run test:browser
+```
+
+For installed Chrome in PowerShell, set `$env:STORYFLOW_BROWSER_CHANNEL='chrome'`. Stop an existing dev server first; the suite starts its own loopback server. GitHub CI runs the same suites in Chromium on Linux; inspect the commit's Actions run for remote results.
+
+Time, entity names, aliases, record type, and character knowledge require writer review. Local extraction does not establish truth or reliably resolve negation/pronouns. The small synonym lexicon is not an embedding model. UTF-8 byte counts are conservative estimates rather than actual model usage. Recent prose is not semantically redacted by the character-knowledge filter. Model adherence, cross-browser coverage beyond the recorded environments, formal accessibility, scale benchmarks, and user-study outcomes are not established.
+
+Memory is capped at 2,000 total decision versions and 500 current records per branch, within the existing 20 MB workspace limit. UI pages show 25 records. Up to 100 in-memory form drafts are retained across rerenders; only explicit saved decisions survive reload/export. Prose undo/redo does not undo memory decisions.
+
+---
+
+# Historical Phase 2 verification
+
+The following records the released Phase 2 milestone. Current exports use schema 3; the schema-v2 graph described below remains supported for migration.
 
 ## Release gate
 

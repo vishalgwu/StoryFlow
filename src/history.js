@@ -1,4 +1,5 @@
 import { createProject, validateProject, MAX_BYTES } from './domain.js';
+import { validateMemory, validateContext, addCandidate, extractCandidates, reviseFact, inheritedFactIds } from './memory.js';
 
 export const MAX_WORKSPACE_BYTES = 20_000_000;
 const copy = value => structuredClone(value);
@@ -38,8 +39,15 @@ export function revisionContent(workspace, revisionId) {
   }) };
 }
 export function validateWorkspace(value) {
-  if (!shape(value, ['schemaVersion', 'id', 'activeBranchId', 'branches', 'revisions', 'paragraphVersions']) ||
-      value.schemaVersion !== 2 || !identifier(value.id) || !identifier(value.activeBranchId)) bad('unsupported workspace format.');
+  if (value?.schemaVersion === 2) {
+    if (!shape(value, ['schemaVersion', 'id', 'activeBranchId', 'branches', 'revisions', 'paragraphVersions']) ||
+        !Array.isArray(value.branches) || !value.branches.every(b => shape(b, ['id', 'name', 'parentBranchId', 'forkRevisionId', 'headRevisionId', 'archived', 'undo', 'redo'])) ||
+        !Array.isArray(value.revisions) || !value.revisions.every(r => r?.generation === null || shape(r?.generation, ['operationId', 'provider', 'model', 'settings', 'steering']))) bad('unsupported legacy workspace.');
+    value = { ...copy(value), schemaVersion: 3, memoryFacts: [], branches: value.branches.map(b => ({ ...copy(b), memoryFactIds: [] })),
+      revisions: value.revisions.map(r => ({ ...copy(r), generation: r.generation ? { ...copy(r.generation), context: null } : null })) };
+  }
+  if (!shape(value, ['schemaVersion', 'id', 'activeBranchId', 'branches', 'revisions', 'paragraphVersions', 'memoryFacts']) ||
+      value.schemaVersion !== 3 || !identifier(value.id) || !identifier(value.activeBranchId)) bad('unsupported workspace format.');
   if (bytes(value) > MAX_WORKSPACE_BYTES) bad('history exceeds 20 MB. Export this project and start a new one.');
   const branches = index(value.branches, 50), revisions = index(value.revisions, 5000);
   if (!Array.isArray(value.paragraphVersions) || value.paragraphVersions.length > 20000) bad('too many passage versions.');
@@ -47,7 +55,7 @@ export function validateWorkspace(value) {
   if (!branches.has(value.activeBranchId) || branches.get(value.activeBranchId).archived) bad('active branch is unavailable.');
   const names = new Set(); let roots = 0;
   for (const b of branches.values()) {
-    if (!shape(b, ['id', 'name', 'parentBranchId', 'forkRevisionId', 'headRevisionId', 'archived', 'undo', 'redo']) ||
+    if (!shape(b, ['id', 'name', 'parentBranchId', 'forkRevisionId', 'headRevisionId', 'archived', 'undo', 'redo', 'memoryFactIds']) ||
         !text(b.name, 80, true) || typeof b.archived !== 'boolean' || names.has(b.name.toLowerCase()) || !revisions.has(b.headRevisionId)) bad('invalid branch.');
     names.add(b.name.toLowerCase());
     if (b.parentBranchId === null) { roots++; if (b.forkRevisionId !== null) bad('root branch has a fork.'); }
@@ -90,7 +98,7 @@ export function validateWorkspace(value) {
     if (['undo', 'redo', 'restore'].includes(r.source) !== (r.restoredFrom !== null)) bad('invalid restoration provenance.');
     if (r.source === 'offline') {
       const g = r.generation;
-      if (!shape(g, ['operationId', 'provider', 'model', 'settings', 'steering']) || !identifier(g.operationId) ||
+      if (!shape(g, ['operationId', 'provider', 'model', 'settings', 'steering', 'context']) || !identifier(g.operationId) ||
           g.provider !== 'offline-template' || g.model !== null || g.steering !== null || !shape(g.settings, [])) bad('invalid generation provenance.');
     } else if (r.generation !== null) bad('unexpected generation provenance.');
   }
@@ -121,10 +129,12 @@ export function validateWorkspace(value) {
     if (r.restoredFrom && !lineage(value, r.parentId).some(p => p.id === r.restoredFrom)) bad('restore source is outside ancestry.');
   }
   if (usedVersions.size !== versions.size) bad('unreferenced passage versions.');
+  validateMemory(value);
+  for (const revision of revisions.values()) if (revision.generation) validateContext(revision.generation.context, value, revision.branchId);
   return copy(value);
 }
 
-function addRevision(workspace, content, summary, source, restoredFrom = null, versionIds = null, operationId = null) {
+function addRevision(workspace, content, summary, source, restoredFrom = null, versionIds = null, operationId = null, context = null) {
   const branch = workspace.branches.find(b => b.id === workspace.activeBranchId);
   const prior = workspace.revisions.find(r => r.id === branch.headRevisionId);
   if (!versionIds) {
@@ -140,7 +150,7 @@ function addRevision(workspace, content, summary, source, restoredFrom = null, v
   }
   const revision = { id: uuid(), branchId: branch.id, parentId: prior?.id || null, title: content.title,
     paragraphVersionIds: [...versionIds], createdAt: new Date().toISOString(), summary, source, restoredFrom,
-    generation: source === 'offline' ? { operationId: operationId || uuid(), provider: 'offline-template', model: null, settings: {}, steering: null } : null };
+    generation: source === 'offline' ? { operationId: operationId || uuid(), provider: 'offline-template', model: null, settings: {}, steering: null, context: copy(context) } : null };
   workspace.revisions.push(revision); branch.headRevisionId = revision.id;
   return revision.id;
 }
@@ -181,20 +191,22 @@ export class BranchEditor {
   get undoStack() { return this.#importBackup?.direction === 'undo' ? ['import'] : this.branch.undo; }
   get redoStack() { return this.#importBackup?.direction === 'redo' ? ['import'] : this.branch.redo; }
   #transact(action) {
-    const next = copy(this.#workspace); action(next); this.#workspace = validateWorkspace(next);
+    const next = copy(this.#workspace); action(next); const validated = validateWorkspace(next);
+    if (JSON.stringify(validated) === JSON.stringify(this.#workspace)) return;
+    this.#workspace = validated;
     this.#importBackup = null; this.epoch++;
   }
-  edit(title, paragraphs, source = 'manual', operationId = null) {
+  edit(title, paragraphs, source = 'manual', operationId = null, context = null) {
     const project = this.project;
     const content = validateProject({ ...project, revision: 0, title, paragraphs });
     if (title === project.title && JSON.stringify(paragraphs) === JSON.stringify(project.paragraphs)) return;
     this.#transact(next => {
       const b = next.branches.find(b => b.id === next.activeBranchId);
       b.undo.push(b.headRevisionId); b.undo = b.undo.slice(-50); b.redo = [];
-      addRevision(next, content, source === 'offline' ? 'Offline sample continuation' : 'Edited draft', source, null, null, operationId);
+      addRevision(next, content, source === 'offline' ? 'Offline sample continuation' : 'Edited draft', source, null, null, operationId, context);
     });
   }
-  append(text, source = 'manual', operationId = null) { this.edit(this.project.title, [...this.project.paragraphs, { id: uuid(), text }], source, operationId); }
+  append(text, source = 'manual', operationId = null, context = null) { this.edit(this.project.title, [...this.project.paragraphs, { id: uuid(), text }], source, operationId, context); }
   replace(workspace) {
     const next = validateWorkspace(workspace);
     this.#importBackup = { direction: 'undo', workspace: this.workspace }; this.#workspace = next; this.epoch++;
@@ -226,7 +238,7 @@ export class BranchEditor {
     const branchId = uuid();
     this.#transact(next => {
       next.branches.push({ id: branchId, name: name.trim(), parentBranchId: next.activeBranchId, forkRevisionId: revisionId,
-        headRevisionId: revisionId, archived: false, undo: [], redo: [] }); next.activeBranchId = branchId;
+        headRevisionId: revisionId, archived: false, undo: [], redo: [], memoryFactIds: inheritedFactIds(next, revisionId) }); next.activeBranchId = branchId;
     });
     return branchId;
   }
@@ -244,6 +256,9 @@ export class BranchEditor {
       if (!b || (b.id === next.activeBranchId && archived)) bad('switch away before archiving this branch.'); b.archived = archived;
     });
   }
+  proposeFact(input) { let result; this.#transact(next => { result = addCandidate(next, input); }); return result; }
+  extractFacts(paragraphVersionId = null, narrativeTime = 0) { let count; this.#transact(next => { count = extractCandidates(next, paragraphVersionId, narrativeTime); }); return count; }
+  updateFact(factId, updates = {}, status = 'pending', revalidate = false) { let result; this.#transact(next => { result = reviseFact(next, factId, updates, status, revalidate); }); return result; }
   static fromLegacy(editor) {
     const result = new BranchEditor(migrateProject(editor.project));
     const current = editor.project, states = [...editor.undoStack, current, ...[...editor.redoStack].reverse()];

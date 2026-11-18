@@ -1,5 +1,6 @@
 import { BranchEditor, parseWorkspace, MAX_WORKSPACE_BYTES } from './history.js';
 import { createExplorer } from './explorer.js';
+import { createMemoryUI } from './memoryui.js';
 import { openStorage, loadSession, saveSession } from './storage.js';
 import { snapshot } from './session.js';
 import { Generation, offlineContinuation } from './generation.js';
@@ -9,6 +10,7 @@ let editor, generation, db, working = null, proposal = null;
 let dirty = false, timer, sequence = 0, saveQueue = Promise.resolve(), writable = false, running = false;
 let errorSource = null;
 let explorer;
+let memory;
 const showError = (error, source = 'action') => { errorSource = source; $('error').textContent = error.message; $('error').hidden = false; };
 const clearError = () => { errorSource = null; $('error').hidden = true; };
 const savedText = () => working ? 'Recovery checkpoint saved — paragraph not applied' : 'Saved in this browser';
@@ -30,6 +32,7 @@ function updateControls() {
   $('edit-status').textContent = 'Unapplied paragraph edit. Save changes to apply it, or Cancel edit to restore the original. Changes are checkpointed for recovery.';
   $('words').textContent = `${editor.project.paragraphs.map(p => p.text).join(' ').trim().split(/\s+/).filter(Boolean).length} words`;
   explorer?.updateControls();
+  memory?.updateControls();
 }
 function changed() {
   dirty = true; sequence++;
@@ -109,10 +112,11 @@ function render() {
     }
     section.append(label, input, actions); $('paragraphs').append(section);
   });
-  renderProposal(); updateControls(); explorer?.render();
+  renderProposal(); updateControls(); explorer?.render(); memory?.render();
 }
 function renderProposal() {
   $('proposal').hidden = !proposal; $('preview').textContent = proposal?.text || '';
+  $('sample-context').hidden = !proposal?.context;
   if (proposal) {
     const branch = editor.workspace.branches.find(b => b.id === proposal.branchId);
     $('proposal-origin').textContent = `From ${branch?.name || 'another project'}${proposal.branchId !== editor.project.branchId ? ' — switch to that branch to add it' : ''}`;
@@ -124,7 +128,7 @@ function download(content, name, type) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 $('title').addEventListener('input', () => {
-  try { editor.edit($('title').value, editor.project.paragraphs); changed(); explorer.render(); }
+  try { editor.edit($('title').value, editor.project.paragraphs); changed(); explorer.render(); memory.render(); }
   catch (error) { $('title').value = editor.project.title; showError(error); }
 });
 $('save').onclick = () => { if (applyEdit()) persist(); };
@@ -173,14 +177,19 @@ $('generate').onclick = async () => {
   if (!writable || working || running) return;
   if (proposal && !['complete', 'applied'].includes(proposal.status) && proposal.text.trim() &&
       !confirm('Replace the recoverable sample with a new run? Export its text first if you want to keep it.')) return;
-  const operation = generation.begin();
-  proposal = { id: operation.id, projectId: operation.projectId, branchId: operation.branchId, text: '', status: 'running' };
+  let operation;
+  try {
+    const context = memory.prepare();
+    if (context.status === 'blocked') throw new Error(`Required instructions and locked facts need ${context.requiredTokens} estimated input tokens. Increase the memory context budget or explicitly unlock a rule. No sample started.`);
+    operation = generation.begin(context);
+  } catch (error) { showError(error); return; }
+  proposal = { id: operation.id, projectId: operation.projectId, branchId: operation.branchId, text: '', status: 'running', context: operation.context };
   running = true; renderProposal(); changed();
   $('run-status').textContent = 'Streaming offline sample…';
   await persist();
   let chunks = 0;
   try {
-    for await (const chunk of offlineContinuation()) {
+    for await (const chunk of offlineContinuation(operation.context)) {
       if (operation.status !== 'running') break;
       operation.text += chunk; proposal.text = operation.text; renderProposal();
       dirty = true; sequence++;
@@ -201,15 +210,17 @@ $('generate').onclick = async () => {
 $('stop').onclick = () => { generation.cancel(); if (proposal) proposal.status = 'canceled'; changed(); };
 $('keep').onclick = () => {
   if ($('keep').disabled) return;
-  try { editor.append(proposal.text, 'offline', proposal.id); proposal.status = 'applied'; render(); changed(); $('run-status').textContent = 'Sample added to current draft.'; }
+  try { editor.append(proposal.text, 'offline', proposal.id, proposal.context || null); proposal.status = 'applied'; render(); changed(); $('run-status').textContent = 'Sample added to current draft.'; }
   catch (error) { showError(error); }
 };
 $('download-partial').onclick = () => download(proposal?.text || '', 'storyflow-sample.txt', 'text/plain');
+$('sample-context').onclick = () => { if (proposal?.context) memory.showContext(proposal.context); };
 addEventListener('beforeunload', event => { if (dirty) { event.preventDefault(); event.returnValue = ''; } });
 addEventListener('keydown', event => {
   if (!(event.ctrlKey || event.metaKey)) return;
   if (event.key.toLowerCase() === 's' && writable) { event.preventDefault(); if (applyEdit()) persist(); }
-  if (event.key.toLowerCase() === 'z' && !working && event.target.tagName !== 'INPUT') {
+  const textEditing = ['INPUT', 'TEXTAREA'].includes(event.target.tagName) && !event.target.readOnly;
+  if (event.key.toLowerCase() === 'z' && !working && !textEditing && event.target.tagName !== 'SELECT') {
     event.preventDefault(); (event.shiftKey ? $('redo') : $('undo')).click();
   }
 });
@@ -229,6 +240,7 @@ async function openEditor(hasLock) {
   generation = new Generation(editor);
   explorer = createExplorer({ getEditor: () => editor, canMutate: () => writable && !working,
     onMutation: () => { render(); changed(); $('run-status').textContent = running ? 'Path changed. Running output remains owned by its original branch.' : 'Branch history updated.'; }, onError: showError });
+  memory = createMemoryUI({ getEditor: () => editor, canMutate: () => writable && !working, onMutation: () => { render(); changed(); }, onError: showError });
   render();
   if (!hasLock) {
     $('save-status').textContent = 'Read-only — another tab is editing';

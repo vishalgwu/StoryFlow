@@ -1,5 +1,6 @@
 import { validateProject, Editor, MAX_HISTORY_BYTES } from './domain.js';
 import { BranchEditor } from './history.js';
+import { validateContextRecord } from './memory.js';
 
 // Internal recovery format is separate from the portable project format.
 export function validateSession(value) {
@@ -26,12 +27,13 @@ export function validateSession(value) {
     throw new Error('Invalid paragraph recovery draft.');
   }
   const proposal = value.proposal;
-  if (proposal !== null && (!proposal || Object.keys(proposal).some(k => !['id', 'projectId', 'branchId', 'text', 'status'].includes(k)) ||
+  if (proposal !== null && (!proposal || Object.keys(proposal).some(k => !['id', 'projectId', 'branchId', 'text', 'status', 'context'].includes(k)) ||
       !['id', 'projectId', 'branchId'].every(key => typeof proposal[key] === 'string' && proposal[key].length > 0 && proposal[key].length <= 100) ||
       typeof proposal.text !== 'string' || proposal.text.length > 20_000 ||
       !['running', 'canceled', 'stale', 'failed', 'complete', 'interrupted', 'applied'].includes(proposal.status))) {
     throw new Error('Invalid continuation recovery draft.');
   }
+  if (proposal?.context !== undefined) validateContextRecord(proposal.context);
   return structuredClone({ ...value, project });
 }
 

@@ -77,7 +77,7 @@ test('legacy draft and recovery migration preserve current prose, IDs, undo and 
   migrated.restore('redo'); assert.equal(migrated.project.paragraphs.length, 3);
   migrated.restore('undo'); assert.equal(migrated.project.paragraphs.length, 2);
   const portable = parseWorkspace(JSON.stringify(createProject()));
-  assert.equal(portable.schemaVersion, 2); assert.equal(portable.branches[0].name, 'Main');
+  assert.equal(portable.schemaVersion, 3); assert.equal(portable.branches[0].name, 'Main');
 });
 test('comparison reports additions, removals, edits and ordering differences', () => {
   const editor = new BranchEditor(), initial = editor.branch.headRevisionId;
