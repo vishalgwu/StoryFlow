@@ -10,6 +10,20 @@ The writer retains final authority over the prose and the facts of the story.
 
 Visual branches, story memory, continuity review, steering controls, and real model providers remain planned. The continuation demo returns a fixed, explicitly labeled sample and makes no AI service calls.
 
+### Progress checkpoint
+
+**We are in Phase 1: editor integrity. Phase 0 is complete.** Roughly **10–15% of the planned initial product (Phases 0–5)** is implemented. This is a scope-based planning estimate, not a measured completion score or an estimate of remaining development time. The larger branch, memory, reviewer, and evaluation systems are still ahead; completed scaffolding does not mean the product is ready for release.
+
+What works now:
+
+- A runnable local writing studio with a documented stack and separate UI, domain, storage, and generation modules.
+- One active draft with title/paragraph editing, stable paragraph IDs, IndexedDB autosave, and explicit save status.
+- Session undo/redo and versioned, size-bounded JSON import/export with validation and replacement confirmation.
+- A streamed offline sample with cancellation, separately retained partial/stale output, and project/branch/revision ownership checks.
+- Seven passing automated regression tests and documented manual browser checks. See [verification](VERIFICATION.md) for the exact coverage and untested failure paths.
+
+Next, finish the editor-integrity milestone: automate the browser regression paths; test storage quota, save/restore failure, and reload recovery; persist recoverable partial output; and improve explicit paragraph edit/save/cancel behavior. Persistent immutable history follows as the foundation of Phase 2. Real model integration and visual steering still need implementation before the intended AI-writing workflow can be demonstrated end to end.
+
 The blueprint uses **Story Steer Studio** as the product name; **StoryFlow** is the repository name. Its references to an earlier prototype and historical test results are design context, not implemented features or verification results for this repository.
 
 Read the full [project blueprint and implementation handoff](Story-Steer-Project-Handoff.pdf) for the proposed requirements, architecture, acceptance criteria, evaluation plan, and open decisions.
@@ -72,16 +86,18 @@ The initial implementation uses browser-native JavaScript modules, HTML/CSS, Ind
 
 ## Implementation roadmap
 
-| Phase | Focus | Release gate |
-| --- | --- | --- |
-| 0 | Independent scaffold and documented stack | App runs locally and its own checks pass |
-| 1 | Editor integrity, persistence validation, undo, cancellation | Edits and drafts survive reloads and stale responses |
-| 2 | Immutable revisions and visual branches | Fork, compare, restore, and export preserve independent histories |
-| 3 | Approved, passage-linked story memory | Relevant facts are retrieved; wrong-branch facts are excluded; stale evidence is visible |
-| 4 | Bounded continuity review | Findings cite evidence and patches require approval and valid preconditions |
-| 5 | Evaluation, accessibility, and release polish | The main writing journey works end to end and claims match measured results |
+| Phase | Focus | Status | Release gate |
+| --- | --- | --- | --- |
+| 0 | Independent scaffold and documented stack | Complete | App runs locally and its own checks pass |
+| 1 | Editor integrity, persistence validation, undo, cancellation | In progress: first working slice complete | Edits and drafts survive reloads and stale responses, with automated browser and failure-recovery coverage |
+| 2 | Immutable revisions and visual branches | Not started | Fork, compare, restore, and export preserve independent histories |
+| 3 | Approved, passage-linked story memory | Not started | Relevant facts are retrieved; wrong-branch facts are excluded; stale evidence is visible |
+| 4 | Bounded continuity review | Not started | Findings cite evidence and patches require approval and valid preconditions |
+| 5 | Evaluation, accessibility, and release polish | Not started | The main writing journey works end to end and claims match measured results |
 
-The first implementation slice should deliver an editable saved draft, safe import boundaries, undo, and generation ownership using a deterministic model fixture. Simultaneous collaboration, social features, multimedia generation, and foundation-model training are outside the initial scope.
+Phase 6 in the blueprint is optional, evidence-driven expansion (for example, cross-device sync or collaboration), beyond the initial product described above. It has not started and is excluded from the rough progress estimate.
+
+The delivered first slice provides an editable saved draft, safe import boundaries, undo, and generation ownership using a deterministic offline fixture. It does not complete every Phase 1 acceptance criterion. Simultaneous collaboration, social features, multimedia generation, and foundation-model training are outside the initial scope.
 
 ## Validation and evaluation plan
 
