@@ -15,7 +15,7 @@ export class Generation {
       operation.status = 'stale'; return false;
     }
     if (!operation.text.trim()) { operation.status = 'failed'; return false; }
-    this.editor.append(operation.text);
+    this.editor.append(operation.text, 'offline', operation.id);
     operation.status = 'complete'; return true;
   }
 }

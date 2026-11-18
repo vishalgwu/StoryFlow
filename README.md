@@ -6,25 +6,26 @@ The writer retains final authority over the prose and the facts of the story.
 
 ## Current status
 
-**Phase 1 complete: reliable local editor.** The editor supports explicit paragraph save/cancel, browser recovery for unapplied edits and partial continuations, persistent bounded undo/redo, validated import/export, storage-failure recovery, and protection against stale responses and conflicting tabs. See [verification](VERIFICATION.md) for acceptance evidence and limitations.
+**Phase 2 complete: immutable history and visual branches.** The local editor now includes a branch tree/list, independent story paths, revision inspection and comparison, safe restore, archive/reopen, and exports that preserve the full history graph. Phase 1 editing, recovery, validation, and storage-failure safeguards remain in place. See [verification](VERIFICATION.md) for acceptance evidence and limitations.
 
-Visual branches, story memory, continuity review, steering controls, and real model providers remain planned. The continuation demo returns a fixed, explicitly labeled sample and makes no AI service calls.
+Story memory, continuity review, steering controls, and real model providers remain planned. The continuation demo returns a fixed, explicitly labeled sample and makes no AI service calls.
 
 ### Progress checkpoint
 
-**Phases 0 and 1 are complete for the initial browser-only, single-draft scope. The next milestone is Phase 2: immutable revision history and visual branches.** Progress is tracked by the acceptance gates below. The previous 10–15% estimate described the earlier first slice; there is no measured whole-project completion percentage. The branch, memory, reviewer, real AI, steering, and evaluation systems remain ahead.
+**Phases 0–2 are complete for the browser-only foundation and branch workflow. The next milestone is Phase 3: evidence-backed story memory.** Progress is tracked by acceptance gates; there is no measured whole-project completion percentage. Memory, continuity review, real AI, steering, and evaluation remain ahead.
 
 What works now:
 
 - A runnable local writing studio with a documented stack and separate UI, domain, storage, and generation modules.
-- One active draft with title/paragraph editing, stable paragraph IDs, IndexedDB autosave, and explicit save status.
-- Explicit paragraph save/cancel, recovery checkpoints for unapplied edits, and undo/redo that survives reload within a bounded history budget.
-- Versioned, size-bounded JSON import/export with validation, replacement confirmation, and migration of the original browser draft format.
+- One active project with multiple independent branches, title/paragraph editing, stable paragraph IDs, IndexedDB autosave, and explicit save status.
+- Explicit paragraph save/cancel, recovery checkpoints for unapplied edits, and branch-local undo/redo that appends immutable recovery revisions and survives reload.
+- Named branches, nested visual/list exploration, fork from an earlier revision, revision comparison, and recoverable restore. Archived branches keep their history and can be reopened.
+- Schema-v2 exports preserve revisions, paragraph versions, fork origins, branch heads, archive states, and recovery pointers. Schema-v1 projects and Phase 1 browser records migrate automatically.
 - A streamed offline sample with cancellation, checkpointed partial/stale output, and project/branch/revision ownership checks. Interrupted output is restored as a proposal, never automatically appended.
 - Retryable save errors, preservation of unreadable stored data, and a single-tab editing lock.
-- Twelve passing Node regression tests and ten passing automated browser scenarios in local Chrome, plus a CI workflow. See [verification](VERIFICATION.md) for exact coverage and environment limits.
+- Twenty-four passing Node regression tests and sixteen automated browser acceptance scenarios, plus a CI workflow. See [verification](VERIFICATION.md) for exact results and environment limits.
 
-Next, replace the bounded recovery history with an immutable revision graph and implement branch creation, switching, comparison, and restore in Phase 2. Real model integration and visual steering still need implementation before the intended AI-writing workflow can be demonstrated end to end.
+Next, add proposed facts linked to immutable source passages, writer approval, and retrieval filtered by branch ancestry in Phase 3. Real model integration and visual steering still need implementation before the intended AI-writing workflow can be demonstrated end to end.
 
 The blueprint uses **Story Steer Studio** as the product name; **StoryFlow** is the repository name. Its references to an earlier prototype and historical test results are design context, not implemented features or verification results for this repository.
 
@@ -92,14 +93,14 @@ The implementation uses browser-native JavaScript modules, HTML/CSS, IndexedDB, 
 | --- | --- | --- | --- |
 | 0 | Independent scaffold and documented stack | Complete | App runs locally and its own checks pass |
 | 1 | Editor integrity, persistence validation, undo, cancellation | Complete for the local single-draft scope | Save/cancel, undo/reload, import safety, cancellation, stale ownership, and storage-failure scenarios pass automated checks |
-| 2 | Immutable revisions and visual branches | Not started | Fork, compare, restore, and export preserve independent histories |
+| 2 | Immutable revisions and visual branches | Complete for the local branch workflow | Fork, compare, restore, migration, and export preserve independent histories; browser switching cannot accept stale completions |
 | 3 | Approved, passage-linked story memory | Not started | Relevant facts are retrieved; wrong-branch facts are excluded; stale evidence is visible |
 | 4 | Bounded continuity review | Not started | Findings cite evidence and patches require approval and valid preconditions |
 | 5 | Evaluation, accessibility, and release polish | Not started | The main writing journey works end to end and claims match measured results |
 
-Phase 6 in the blueprint is optional, evidence-driven expansion (for example, cross-device sync or collaboration), beyond the initial product described above. It has not started and is excluded from the rough progress estimate.
+Phase 6 in the blueprint is optional, evidence-driven expansion (for example, cross-device sync or collaboration), beyond the initial product described above. It has not started.
 
-Phase 1 uses a deterministic offline fixture. Branch switching is verified at the operation-ownership boundary in Node tests; browser branch-switch acceptance belongs to Phase 2 once branches exist. Attention anchors do not yet exist and their remapping rules will be implemented with steering. Simultaneous collaboration, social features, multimedia generation, and foundation-model training are outside the initial scope.
+Generation currently uses a deterministic offline fixture. Node and browser tests verify branch switching, including switch-away-and-back during a running stream. Attention anchors do not yet exist and their remapping rules will be implemented with steering. Automatic merging, simultaneous collaboration, social features, multimedia generation, and foundation-model training are outside the initial scope.
 
 ## Validation and evaluation plan
 
@@ -114,6 +115,8 @@ StoryFlow/
 |-- index.html, styles.css           Writing studio interface
 |-- src/app.js                       UI coordination and serialized saves
 |-- src/domain.js                    Project validation and reversible editing
+|-- src/history.js                   Immutable revision graph and branch rules
+|-- src/explorer.js                  Branch tree, revision inspection, and comparison UI
 |-- src/session.js                   Validated recovery snapshots and migration
 |-- src/storage.js                   IndexedDB persistence
 |-- src/generation.js                Request ownership and offline fixture
@@ -146,12 +149,23 @@ Open **http://127.0.0.1:4173** in a current browser with IndexedDB and Web Locks
 
 - Choose **Edit passage**, then **Save changes** to apply or **Cancel edit** to restore its original prose. Unapplied edits are checkpointed after a short pause and return after reload.
 - **Save draft** applies the active paragraph edit and saves immediately. Title changes save automatically.
-- **Undo** and **Redo** survive reload within the recovery-history budget. **Ctrl/Cmd+Enter** saves a paragraph, **Escape** cancels it, and **Ctrl/Cmd+S** saves the draft. Outside text editing, **Ctrl/Cmd+Z** and **Ctrl/Cmd+Shift+Z** navigate draft history.
+- **Undo** and **Redo** survive reload and create recovery revisions on the active branch. **Ctrl/Cmd+Enter** saves a paragraph, **Escape** cancels it, and **Ctrl/Cmd+S** saves the draft. Outside text editing, **Ctrl/Cmd+Z** and **Ctrl/Cmd+Shift+Z** navigate draft history.
 - Stopped, failed, or interrupted sample output returns in the review panel. It requires an explicit action to add to the current draft. A new run asks before replacing recoverable text.
 - **Retry saving** becomes available after a failed write. Export a backup while storage is unavailable.
 - A second tab opens read-only while another tab owns the draft. Close the owner and reload the other tab to edit there.
 
-Export a project JSON backup before clearing browser data or replacing a draft. Export includes a visible unapplied paragraph edit, but not undo history or the separate sample panel; use **Export sample text** for that panel.
+Export a project JSON backup before clearing browser data or replacing a project. Export preserves the entire branch/revision graph; a visible unapplied edit becomes an export-only revision without changing the editor. If an edit cannot fit within the history limits, Export project backs up the committed graph and explicitly asks you to use **Export edit text** for the pending words. The separate sample panel still needs **Export sample text**. Import and **New project** keep one previous-project recovery copy for immediate Undo/Redo; that copy is replaced by the next project replacement and cleared by an edit or branch mutation.
+
+### Explore branches and history
+
+1. Enter a **Branch name** and choose **Fork current draft**. An empty name creates a unique Alternative name. The original branch remains unchanged.
+2. Edit the new path and use **Active branch** or an **Open** button in the nested tree to switch paths. Save or cancel an unapplied paragraph edit first.
+3. Choose a revision in **Revision history** to inspect its prose, timestamp, source, and restoration provenance. Offline-generated revisions also retain their operation ID and explicitly empty model/steering settings.
+4. Use **Fork selected revision** to explore an earlier point. **Restore selected revision** creates a new revision on the current branch and keeps all intervening work. Restore and fork accept that branch's ancestors; sibling-only history is available for comparison rather than implicit restoration.
+5. Choose any two revisions under **Compare two revisions**. Removed text is struck through, added text is underlined, and passage moves are labeled. Comparison is by stable paragraph identity, not a word-level diff or automatic merge.
+6. To rename the active branch, enter a name and choose **Rename active branch**. Switch away before archiving it. **Reopen** makes an archived path available again without deleting its history.
+
+Running output stays owned by its original branch. Switching away and back still makes it stale; adding a retained sample requires an explicit action on its original branch.
 
 ```sh
 npm run check
@@ -174,9 +188,10 @@ The server is for local development and serves only application assets. It is no
 ### Current limits
 
 - One active draft per browser origin, with a Web Lock preventing concurrent editing in multiple tabs. Browsers without Web Locks open read-only.
-- Undo/redo retains up to 50 prior edits with an 8 MB combined history budget. Older recovery steps are pruned for large projects. This is recoverable editor history, not the immutable branch graph planned for Phase 2.
-- Project JSON is schema version 1, at most 2 MB, with up to 200 paragraphs of 20,000 characters each. Unsupported fields and malformed records are rejected before replacement.
-- Imports require confirmation and can be undone within retained history. Export the current draft first for a durable backup.
+- Each branch keeps up to 50 undo/redo action pointers. Immutable revisions and passage versions are not pruned. The old Phase 1 recovery format's 8 MB history budget applies only when reading legacy records.
+- Project JSON is schema version 2, with limits of 20 MB, 50 branches, 5,000 revisions, and 20,000 paragraph versions. Each revision retains the 2 MB draft budget with up to 200 paragraphs of 20,000 characters each. At a limit, the attempted mutation is refused without deleting history; export and use **New project** to continue separately.
+- Schema-v1 imports are still supported and migrated. Unknown fields, broken references, cycles, sibling ancestry leaks, duplicate IDs, and unsupported records are rejected before replacement.
+- Import/New project require confirmation and retain one immediate project-replacement undo copy. This backup can add another 20 MB to browser storage, but is not included in portable exports. Export first for a durable backup.
 - Checkpoints are periodic, not a guarantee against losing the latest keystroke or streamed word during a crash. Wait for the saved indicator or export before closing. Starting a new run replaces the saved sample panel after confirmation when needed.
 - Storage failures are surfaced; if stored data cannot be restored, saving is disabled to avoid overwriting it. Export any new work before closing.
 - Browser storage may be evicted. There is no cross-device sync, hosted backend, service-worker offline reload guarantee, or paid/live model integration.

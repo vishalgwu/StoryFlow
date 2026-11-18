@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
+import { revisionContent } from '../../src/history.js';
 
 const ready = async page => {
   await page.goto('/');
@@ -93,18 +94,20 @@ test('validated import/export, rejection and undoable replacement', async ({ pag
   await page.getByRole('button', { name: 'Export project', exact: true }).click();
   const download = await downloadPromise;
   const exported = JSON.parse(await readFile(await download.path(), 'utf8'));
-  expect(exported.paragraphs[0].text).toContain('<script>');
+  const head = exported.branches.find(b => b.id === exported.activeBranchId).headRevisionId;
+  const exportedText = revisionContent(exported, head).paragraphs[0].text;
+  expect(exportedText).toContain('<script>');
   await page.locator('#file').setInputFiles('tests/fixtures/invalid-project.json');
   await expect(page.getByRole('alert')).toContainText('Invalid project');
-  await expect(page.getByRole('textbox', { name: 'PASSAGE 1', exact: true })).toHaveValue(exported.paragraphs[0].text);
+  await expect(page.getByRole('textbox', { name: 'PASSAGE 1', exact: true })).toHaveValue(exportedText);
   page.once('dialog', dialog => dialog.accept());
   await page.locator('#file').setInputFiles('tests/fixtures/valid-project.json');
   await expect(page.getByRole('textbox', { name: 'Story title', exact: true })).toHaveValue('The paper boat');
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
-  await expect(page.getByRole('textbox', { name: 'PASSAGE 1', exact: true })).toHaveValue(exported.paragraphs[0].text);
+  await expect(page.getByRole('textbox', { name: 'PASSAGE 1', exact: true })).toHaveValue(exportedText);
   page.once('dialog', dialog => dialog.accept());
   await page.locator('#file').setInputFiles({ name: 'roundtrip.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(exported)) });
-  await expect(page.getByRole('textbox', { name: 'PASSAGE 1', exact: true })).toHaveValue(exported.paragraphs[0].text);
+  await expect(page.getByRole('textbox', { name: 'PASSAGE 1', exact: true })).toHaveValue(exportedText);
   expect(await page.evaluate(() => window.bad)).toBeUndefined();
 });
 
@@ -208,5 +211,5 @@ test('read transaction failure disables saving and leaves stored project intact'
   // Remove the injected module by using a fresh page in the same browser context.
   await page.close();
   const recovered = await page.context().newPage(); await ready(recovered);
-  expect((await readRecord(recovered)).project).toEqual(before.project);
+  expect((await readRecord(recovered)).workspace).toEqual(before.workspace);
 });

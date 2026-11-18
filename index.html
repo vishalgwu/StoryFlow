@@ -14,6 +14,8 @@
     <section class="workspace" aria-label="Story editor">
       <div class="toolbar"><span id="save-status" role="status">Opening draft…</span><div><button id="undo" disabled>Undo</button><button id="redo" disabled>Redo</button><button id="save" disabled>Save draft</button><button id="retry" hidden>Retry saving</button></div></div>
       <p id="edit-status" class="edit-status" role="status" hidden></p>
+      <button id="export-edit" class="edit-backup" hidden>Export edit text</button>
+      <div class="branchbar"><label for="branch-select">Active branch</label><select id="branch-select" disabled></select><span id="revision-count"></span></div>
       <div class="paper">
         <label class="eyebrow" for="title">YOUR STORY</label>
         <input id="title" aria-label="Story title" maxlength="200" disabled>
@@ -29,11 +31,20 @@
       <div class="notice"><strong>Offline template demo</strong><p>This fixed sample is not AI-generated in this session and does not respond to your story. No model or network service is called.</p></div>
       <button id="generate" class="primary" disabled>Try sample continuation</button><button id="stop" disabled>Stop</button>
       <p id="run-status" role="status">Ready when you are.</p>
-      <section id="proposal" hidden><h2>Recoverable sample</h2><p id="preview"></p><button id="keep" disabled>Add to current draft</button><p class="hint">Samples are checkpointed in this browser. A new run replaces this panel; export the sample text to keep a separate copy.</p><button id="download-partial">Export sample text</button></section>
+      <section id="proposal" hidden><h2>Recoverable sample</h2><p id="proposal-origin" class="hint"></p><p id="preview"></p><button id="keep" disabled>Add to current draft</button><p class="hint">Samples are checkpointed in this browser. A new run replaces this panel; export the sample text to keep a separate copy.</p><button id="download-partial">Export sample text</button></section>
       <hr><h2>Keep a copy</h2><p>Browser storage can be cleared. Export a backup of your draft.</p>
       <button id="export" disabled>Export project</button><button id="import" disabled>Import project</button><input id="file" type="file" accept=".json,application/json" hidden>
-      <p class="hint">One active project. Import replaces it after confirmation; export your current work first. Up to 50 undo steps are saved in this browser. Finish or cancel a paragraph edit before importing.</p>
+      <button id="new-project" disabled>New project</button>
+      <p class="hint">Project exports preserve branches and immutable history. Import replaces the project; export a backup first. Finish or cancel an edit before changing branches.</p>
     </aside>
+    <section class="history-panel" aria-label="Branches and history">
+      <div class="history-heading"><p class="eyebrow">EXPLORE THE POSSIBILITIES</p><h2>Every path has a history.</h2><p class="hint">Fork an alternative. Keep the original. Restore without erasing later work.</p></div>
+      <div class="history-grid">
+        <section aria-label="Branch explorer"><h3>Your branches</h3><label for="branch-name">Branch name</label><input id="branch-name" maxlength="80" placeholder="A different ending"><div class="history-actions"><button id="fork" disabled>Fork current draft</button><button id="rename-branch" disabled>Rename active branch</button></div><ol id="branch-tree" class="branch-tree"></ol></section>
+        <section aria-label="Revision explorer"><h3>Revision history</h3><label for="revision-select">Inspect a revision</label><select id="revision-select"></select><p id="revision-info" class="hint"></p><pre id="revision-preview"></pre><div class="history-actions"><button id="fork-revision" disabled>Fork selected revision</button><button id="restore-revision" disabled>Restore selected revision</button></div><p class="hint">Restore creates a new revision. All later writing remains in history. Undo and redo also create recovery revisions.</p></section>
+      </div>
+      <section class="comparison" aria-label="Compare revisions"><h3>Compare two revisions</h3><div class="comparison-controls"><label>From<select id="compare-left"></select></label><label>To<select id="compare-right"></select></label><button id="compare">Compare revisions</button></div><div id="comparison-result" aria-live="polite"></div></section>
+    </section>
   </main>
   <p id="error" class="error" role="alert" hidden></p>
 </body>
