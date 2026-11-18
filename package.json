@@ -1,0 +1,12 @@
+{
+  "name": "storyflow",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test",
+    "check": "node --check src/app.js && node --check src/domain.js && node --check src/storage.js && node --check src/generation.js && node --check server.mjs && node --test"
+  }
+}

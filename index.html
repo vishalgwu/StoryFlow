@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A local writing studio with safe edits and recoverable drafts.">
+  <title>StoryFlow — Writing studio</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/src/app.js"></script>
+</head>
+<body>
+  <header><a class="brand" href="/">StoryFlow<span>WRITING STUDIO</span></a><span class="badge">LOCAL DRAFT · EARLY PREVIEW</span></header>
+  <main>
+    <section class="workspace" aria-label="Story editor">
+      <div class="toolbar"><span id="save-status" role="status">Opening draft…</span><div><button id="undo" disabled>Undo</button><button id="redo" disabled>Redo</button><button id="save" disabled>Save draft</button></div></div>
+      <div class="paper">
+        <label class="eyebrow" for="title">YOUR STORY</label>
+        <input id="title" aria-label="Story title" maxlength="200" disabled>
+        <p class="hint">Make room for the next possibility.</p>
+        <div id="paragraphs"></div>
+        <button id="add" class="quiet" disabled>+ Add paragraph</button>
+      </div>
+      <footer><span id="words">0 words</span><span>Your words stay in this browser.</span></footer>
+    </section>
+    <aside>
+      <p class="eyebrow">THE NEXT POSSIBILITY</p><h1>A little momentum.</h1>
+      <p>Try a sample continuation, then make it your own. Your current draft stays editable while it runs.</p>
+      <div class="notice"><strong>Offline template demo</strong><p>This fixed sample is not AI-generated in this session and does not respond to your story. No model or network service is called.</p></div>
+      <button id="generate" class="primary" disabled>Try sample continuation</button><button id="stop" disabled>Stop</button>
+      <p id="run-status" role="status">Ready when you are.</p>
+      <section id="proposal" hidden><h2>Recoverable sample</h2><p id="preview"></p><button id="keep" disabled>Add to current draft</button><p class="hint">Stopped or outdated output stays here until the next run. Export it as text to keep a copy.</p><button id="download-partial">Export sample text</button></section>
+      <hr><h2>Keep a copy</h2><p>Browser storage can be cleared. Export a backup of your draft.</p>
+      <button id="export" disabled>Export project</button><button id="import" disabled>Import project</button><input id="file" type="file" accept=".json,application/json" hidden>
+      <p class="hint">One active project. Import replaces it after confirmation; export your current work first. Undo history lasts for this session.</p>
+    </aside>
+  </main>
+  <p id="error" class="error" role="alert" hidden></p>
+</body>
+</html>

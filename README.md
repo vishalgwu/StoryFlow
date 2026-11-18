@@ -6,7 +6,9 @@ The writer retains final authority over the prose and the facts of the story.
 
 ## Current status
 
-**Planning stage.** This repository contains the project introduction, implementation blueprint, and MIT license. There is no application code, runnable demo, or test suite yet.
+**First foundation slice implemented.** A browser editor now supports a single locally saved draft, paragraph editing, session undo/redo, validated project import/export, and a streamed offline continuation fixture with cancellation and stale-response protection. See [verification](VERIFICATION.md) for checks and limitations.
+
+Visual branches, story memory, continuity review, steering controls, and real model providers remain planned. The continuation demo returns a fixed, explicitly labeled sample and makes no AI service calls.
 
 The blueprint uses **Story Steer Studio** as the product name; **StoryFlow** is the repository name. Its references to an earlier prototype and historical test results are design context, not implemented features or verification results for this repository.
 
@@ -66,7 +68,7 @@ Begin with a browser-first application and clear boundaries between the interfac
 - **Memory:** source-linked records; summaries and embeddings support retrieval rather than replace authoritative prose.
 - **Optional backend:** introduce only when managed model access, durable reviews, cross-device projects, or collaboration requires it.
 
-The framework, default model, supported provider set, and hosting platform have not been selected. Browser inference, local models, and user-configured remote endpoints are options to evaluate. Application state, story memory, and model prompt/KV caches are separate concerns.
+The initial implementation uses browser-native JavaScript modules, HTML/CSS, IndexedDB, and Node's built-in HTTP server and test runner. It has no runtime npm dependencies and no build step. This keeps the first editor slice small and makes its domain rules testable independently of the UI. See [the architecture decision](docs/architecture.md). Default models, real providers, and hosting remain undecided. Application state, story memory, and model prompt/KV caches are separate concerns.
 
 ## Implementation roadmap
 
@@ -91,11 +93,17 @@ Product evaluation should compare visual steering with a prompt-box baseline und
 
 ```text
 StoryFlow/
-|-- README.md                        Project overview and current status
+|-- index.html, styles.css           Writing studio interface
+|-- src/app.js                       UI coordination and serialized saves
+|-- src/domain.js                    Project validation and reversible editing
+|-- src/storage.js                   IndexedDB persistence
+|-- src/generation.js                Request ownership and offline fixture
+|-- server.mjs                       Loopback-only development server
+|-- tests/                          Domain and HTTP regression checks
+|-- docs/architecture.md             Initial stack decision and limitations
+|-- VERIFICATION.md                  Executed checks and manual acceptance paths
 |-- Story-Steer-Project-Handoff.pdf   Detailed implementation blueprint
-|-- LICENSE                          MIT license
-|-- .gitattributes                   Binary handling for PDF documents
-`-- .gitignore                       Initial ignore rules
+`-- LICENSE                         MIT license
 ```
 
 ## Getting started
@@ -107,7 +115,31 @@ git clone https://github.com/vishalgwu/StoryFlow.git
 cd StoryFlow
 ```
 
-There are no install, development-server, or test commands yet. Those instructions will be added when the application stack and first working slice are implemented.
+Use Node.js 22 or newer. No dependency installation is needed.
+
+```sh
+npm start
+```
+
+Open **http://127.0.0.1:4173** in a current browser. Use the server instead of opening `index.html` directly. Drafts save automatically after a short pause; **Save draft** also saves immediately. **Undo** and **Redo** apply within the current session. Export a project JSON backup before clearing browser data or replacing a draft.
+
+```sh
+npm run check
+# Or run only the regression suite:
+npm test
+```
+
+The server is for local development and serves only application assets. It is not a production hosting or authentication service.
+
+### Current limits
+
+- One active draft per browser origin; concurrent editing in multiple tabs is not supported.
+- Undo/redo retains up to 50 prior edits in memory and resets on reload. Persistent revision history is a later milestone.
+- Project JSON is schema version 1, at most 2 MB, with up to 200 paragraphs of 20,000 characters each. Unsupported fields and malformed records are rejected before replacement.
+- Imports require confirmation and can be undone during the session. Export the current draft first for a durable backup.
+- Stopped or stale continuation text stays in the review panel until the next run or reload. Export that text to preserve it.
+- Storage failures are surfaced; if stored data cannot be restored, saving is disabled to avoid overwriting it. Export any new work before closing.
+- Browser storage may be evicted. There is no cross-device sync, hosted backend, service-worker offline reload guarantee, or paid/live model integration.
 
 ## License
 

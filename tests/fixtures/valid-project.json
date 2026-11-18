@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "fixture-project",
+  "branchId": "fixture-main",
+  "title": "The paper boat",
+  "revision": 0,
+  "paragraphs": [
+    { "id": "opening", "text": "The paper boat reached the far bank with its message still dry." }
+  ]
+}

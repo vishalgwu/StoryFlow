@@ -208,6 +208,12 @@ cython_debug/
 # Temporary file for partial code execution
 tempCodeRunnerFile.py
 
+# JavaScript development
+node_modules/
+coverage/
+playwright-report/
+test-results/
+
 # Ruff stuff:
 .ruff_cache/
 
