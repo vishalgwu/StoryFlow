@@ -1,113 +1,223 @@
-import { createProject, Editor, parseProject, MAX_BYTES } from './domain.js';
-import { openStorage, loadProject, saveProject } from './storage.js';
+import { createProject, Editor, parseProject, validateProject, MAX_BYTES } from './domain.js';
+import { openStorage, loadSession, saveSession } from './storage.js';
+import { snapshot } from './session.js';
 import { Generation, offlineContinuation } from './generation.js';
 
 const $ = id => document.getElementById(id);
-let editor, generation, db, dirty = false, timer, saveQueue = Promise.resolve();
-const showError = error => { $('error').textContent = error.message; $('error').hidden = false; };
-function changed() {
-  dirty = true;
-  $('save-status').textContent = 'Unsaved changes';
-  $('undo').disabled = !editor.undoStack.length;
-  $('redo').disabled = !editor.redoStack.length;
+let editor, generation, db, working = null, proposal = null;
+let dirty = false, timer, sequence = 0, saveQueue = Promise.resolve(), writable = false, running = false;
+let errorSource = null;
+const showError = (error, source = 'action') => { errorSource = source; $('error').textContent = error.message; $('error').hidden = false; };
+const clearError = () => { errorSource = null; $('error').hidden = true; };
+const savedText = () => working ? 'Recovery checkpoint saved — paragraph not applied' : 'Saved in this browser';
+function updateControls() {
+  for (const id of ['title', 'save', 'add', 'generate', 'import']) $(id).disabled = !writable;
+  $('title').disabled ||= !!working;
+  $('add').disabled ||= !!working || editor.project.paragraphs.length >= 200;
+  $('generate').disabled ||= !!working || running;
+  $('import').disabled ||= !!working || running;
+  $('undo').disabled = !writable || !!working || !editor.undoStack.length;
+  $('redo').disabled = !writable || !!working || !editor.redoStack.length;
+  $('stop').disabled = !running;
+  $('keep').disabled = !writable || running || !!working || !proposal?.text.trim() ||
+    ['complete', 'applied'].includes(proposal.status) || proposal.projectId !== editor.project.id || proposal.branchId !== editor.project.branchId;
+  $('export').disabled = false;
+  $('edit-status').hidden = !working;
+  $('edit-status').textContent = 'Unapplied paragraph edit. Save changes to apply it, or Cancel edit to restore the original. Changes are checkpointed for recovery.';
   $('words').textContent = `${editor.project.paragraphs.map(p => p.text).join(' ').trim().split(/\s+/).filter(Boolean).length} words`;
-  clearTimeout(timer); timer = setTimeout(persist, 500);
+}
+function changed() {
+  dirty = true; sequence++;
+  $('save-status').textContent = working ? 'Unapplied edit — checkpoint pending' : 'Unsaved changes';
+  updateControls();
+  clearTimeout(timer); timer = setTimeout(persist, 250);
 }
 async function persist() {
   clearTimeout(timer);
-  const snapshot = structuredClone(editor.project), epoch = editor.epoch;
+  if (!writable) return;
+  const version = sequence;
+  let record;
+  try { record = snapshot(editor, working, proposal); }
+  catch (error) { showError(error); return; }
   $('save-status').textContent = 'Saving…';
-  // Serialize transactions so a slower earlier save cannot replace a newer one.
-  saveQueue = saveQueue.catch(() => {}).then(async () => {
-    if (!db) throw new Error('Browser storage unavailable. Export your draft to keep it.');
-    await saveProject(db, snapshot);
-    if (epoch === editor.epoch) { dirty = false; $('save-status').textContent = 'Saved in this browser'; }
+  // A failed transaction does not poison later retries. Only the latest checkpoint reports success.
+  const task = saveQueue.catch(() => {}).then(async () => {
+    if (!db) throw new Error('Saving disabled to protect existing data. Export a backup; reload to retry opening storage.');
+    await saveSession(db, record);
+    if (version === sequence) {
+      dirty = false; $('save-status').textContent = savedText(); $('retry').hidden = true;
+      if (errorSource === 'storage') clearError();
+    }
   });
-  try { await saveQueue; }
-  catch (error) { $('save-status').textContent = 'Save failed — export a backup'; showError(error); }
+  saveQueue = task;
+  try { await task; }
+  catch (error) {
+    if (version !== sequence) return;
+    $('save-status').textContent = 'Save failed — export a backup'; $('retry').hidden = !db;
+    showError(new Error(error.name === 'QuotaExceededError' ? 'Browser storage is full. Your draft is still open. Export a backup, free storage, then Retry saving.' : error.message), 'storage');
+  }
+}
+function focusEdit() { document.querySelector('textarea:not([readonly])')?.focus(); }
+function beginEdit(paragraph) {
+  if (!writable || working) return;
+  working = { paragraphId: paragraph.id, text: paragraph.text };
+  editor.epoch++; render(); changed(); focusEdit();
+}
+function applyEdit() {
+  if (!working) return true;
+  try {
+    const id = working.paragraphId;
+    editor.edit(editor.project.title, editor.project.paragraphs.map(p => p.id === id ? { ...p, text: working.text } : p));
+    working = null; render(); changed();
+    document.querySelector(`[data-edit-id="${CSS.escape(id)}"]`)?.focus();
+    return true;
+  } catch (error) { showError(error); return false; }
+}
+function cancelEdit() {
+  const id = working?.paragraphId; working = null; editor.epoch++; render(); changed();
+  document.querySelector(`[data-edit-id="${CSS.escape(id)}"]`)?.focus();
+}
+function button(text, action) {
+  const element = document.createElement('button'); element.textContent = text; element.onclick = action; return element;
 }
 function render() {
-  $('title').value = editor.project.title;
-  $('paragraphs').replaceChildren();
-  for (const paragraph of editor.project.paragraphs) {
+  $('title').value = editor.project.title; $('paragraphs').replaceChildren();
+  editor.project.paragraphs.forEach((paragraph, index) => {
+    const section = document.createElement('section'); section.className = 'passage';
     const label = document.createElement('label'); label.className = 'paragraph-label';
-    label.htmlFor = 'p-' + paragraph.id; label.textContent = `PASSAGE ${$('paragraphs').children.length / 2 + 1}`;
+    label.htmlFor = `p-${paragraph.id}`; label.textContent = `PASSAGE ${index + 1}`;
     const input = document.createElement('textarea'); input.className = 'paragraph'; input.id = label.htmlFor;
-    input.maxLength = 20_000; input.value = paragraph.text;
-    input.addEventListener('input', () => {
-      try {
-        editor.edit($('title').value, editor.project.paragraphs.map(p => p.id === paragraph.id ? { ...p, text: input.value } : p)); changed();
-      } catch (error) {
-        input.value = editor.project.paragraphs.find(p => p.id === paragraph.id).text;
-        showError(new Error('Project size limit reached. Export this draft before starting another.'));
-      }
+    input.maxLength = 20_000; input.readOnly = working?.paragraphId !== paragraph.id || !writable;
+    input.value = working?.paragraphId === paragraph.id ? working.text : paragraph.text;
+    input.rows = Math.max(3, Math.min(16, Math.ceil(input.value.length / 65)));
+    input.addEventListener('input', () => { working.text = input.value; editor.epoch++; changed(); });
+    input.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && working) { event.preventDefault(); cancelEdit(); }
+      if ((event.ctrlKey || event.metaKey) && event.key === 'Enter' && working) { event.preventDefault(); if (applyEdit()) persist(); }
     });
-    $('paragraphs').append(label, input);
-  }
-  $('undo').disabled = !editor.undoStack.length; $('redo').disabled = !editor.redoStack.length;
+    const actions = document.createElement('div'); actions.className = 'passage-actions';
+    if (!input.readOnly) {
+      actions.append(button('Save changes', () => { if (applyEdit()) persist(); }), button('Cancel edit', cancelEdit));
+    } else {
+      const edit = button(`Edit passage ${index + 1}`, () => beginEdit(paragraph));
+      edit.dataset.editId = paragraph.id; edit.disabled = !writable || !!working; actions.append(edit);
+    }
+    section.append(label, input, actions); $('paragraphs').append(section);
+  });
+  renderProposal(); updateControls();
+}
+function renderProposal() {
+  $('proposal').hidden = !proposal; $('preview').textContent = proposal?.text || '';
 }
 function download(content, name, type) {
   const url = URL.createObjectURL(new Blob([content], { type }));
   const link = document.createElement('a'); link.href = url; link.download = name; link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-$('title').addEventListener('input', () => { editor.edit($('title').value, editor.project.paragraphs); changed(); });
-$('save').onclick = persist;
-for (const direction of ['undo', 'redo']) $(direction).onclick = () => { editor.restore(direction); render(); changed(); };
-$('add').onclick = () => {
-  try { editor.append(''); render(); changed(); $('paragraphs').lastElementChild.focus(); }
+$('title').addEventListener('input', () => {
+  try { editor.edit($('title').value, editor.project.paragraphs); changed(); }
+  catch (error) { $('title').value = editor.project.title; showError(error); }
+});
+$('save').onclick = () => { if (applyEdit()) persist(); };
+$('retry').onclick = persist;
+for (const direction of ['undo', 'redo']) $(direction).onclick = () => {
+  try { editor.restore(direction); render(); changed(); $('run-status').textContent = 'Draft history restored.'; }
   catch (error) { showError(error); }
 };
-$('export').onclick = () => download(JSON.stringify(editor.project, null, 2), 'storyflow-project.json', 'application/json');
+$('add').onclick = () => {
+  try { editor.append(''); const paragraph = editor.project.paragraphs.at(-1); beginEdit(paragraph); }
+  catch (error) { showError(error); }
+};
+$('export').onclick = () => {
+  try {
+    // Include the visible unapplied edit in a portable backup without changing the committed draft.
+    const project = validateProject({ ...editor.project, paragraphs: editor.project.paragraphs.map(p => working?.paragraphId === p.id ? { ...p, text: working.text } : p) });
+    download(JSON.stringify(project, null, 2), 'storyflow-project.json', 'application/json');
+  } catch (error) { showError(error); }
+};
 $('import').onclick = () => { $('file').value = ''; $('file').click(); };
 $('file').onchange = async () => {
-  const file = $('file').files[0]; if (!file) return;
+  const file = $('file').files[0]; if (!file || !writable || working || running) return;
   try {
     if (file.size > MAX_BYTES) throw new Error('Project exceeds the 2 MB import limit.');
     const epoch = editor.epoch, next = parseProject(await file.text());
-    if (epoch !== editor.epoch) throw new Error('Draft changed while reading the file. Try importing again.');
-    if (!confirm('Replace this draft with the imported project? Export a backup first if needed. You can undo this replacement during this session.')) return;
-    generation.cancel(); editor.commit(next); render(); changed(); $('error').hidden = true;
+    if (epoch !== editor.epoch || working || running) throw new Error('Draft changed while reading the file. Try importing again.');
+    if (!confirm('Replace this draft with the imported project? Export a backup first if needed. Undo can restore the previous draft.')) return;
+    generation.cancel(); editor.commit(next); render(); changed(); clearError();
     $('run-status').textContent = 'Project imported. Previous draft is available with Undo.';
   } catch (error) { showError(error); }
 };
 $('generate').onclick = async () => {
+  if (!writable || working || running) return;
+  if (proposal && !['complete', 'applied'].includes(proposal.status) && proposal.text.trim() &&
+      !confirm('Replace the recoverable sample with a new run? Export its text first if you want to keep it.')) return;
   const operation = generation.begin();
-  $('generate').disabled = true; $('stop').disabled = false; $('keep').disabled = true;
-  $('proposal').hidden = false; $('preview').textContent = '';
+  proposal = { id: operation.id, projectId: operation.projectId, branchId: operation.branchId, text: '', status: 'running' };
+  running = true; renderProposal(); changed();
   $('run-status').textContent = 'Streaming offline sample…';
+  await persist();
+  let chunks = 0;
   try {
     for await (const chunk of offlineContinuation()) {
       if (operation.status !== 'running') break;
-      operation.text += chunk; $('preview').textContent = operation.text;
+      operation.text += chunk; proposal.text = operation.text; renderProposal();
+      dirty = true; sequence++;
+      if (++chunks % 4 === 0) { changed(); await persist(); }
     }
     if (generation.finish(operation)) {
-      render(); changed(); $('run-status').textContent = 'Sample added. Undo is available.';
+      proposal.status = 'complete'; render(); $('run-status').textContent = 'Sample added. Undo is available.';
     } else {
+      proposal.status = operation.status;
       $('run-status').textContent = operation.status === 'stale' ? 'Draft changed. Sample kept separately for your review.' : 'Stopped. Partial sample kept separately.';
-      $('keep').disabled = !operation.text.trim();
     }
-  } catch (error) { operation.status = 'failed'; showError(error); $('keep').disabled = !operation.text.trim(); }
-  finally { $('generate').disabled = false; $('stop').disabled = true; }
+  } catch (error) {
+    operation.status = proposal.status = 'failed'; showError(error);
+    $('run-status').textContent = 'Sample failed. Partial output is kept separately; export it or start a new run.';
+  }
+  finally { running = false; renderProposal(); changed(); await persist(); }
 };
-$('stop').onclick = () => generation.cancel();
+$('stop').onclick = () => { generation.cancel(); if (proposal) proposal.status = 'canceled'; changed(); };
 $('keep').onclick = () => {
-  try { editor.append(generation.operation.text); render(); changed(); $('keep').disabled = true; $('run-status').textContent = 'Sample added to current draft.'; }
+  if ($('keep').disabled) return;
+  try { editor.append(proposal.text); proposal.status = 'applied'; render(); changed(); $('run-status').textContent = 'Sample added to current draft.'; }
   catch (error) { showError(error); }
 };
-$('download-partial').onclick = () => download($('preview').textContent, 'storyflow-sample.txt', 'text/plain');
+$('download-partial').onclick = () => download(proposal?.text || '', 'storyflow-sample.txt', 'text/plain');
 addEventListener('beforeunload', event => { if (dirty) { event.preventDefault(); event.returnValue = ''; } });
-async function start() {
-  let project;
-  try { db = await openStorage(); project = await loadProject(db); }
+addEventListener('keydown', event => {
+  if (!(event.ctrlKey || event.metaKey)) return;
+  if (event.key.toLowerCase() === 's' && writable) { event.preventDefault(); if (applyEdit()) persist(); }
+  if (event.key.toLowerCase() === 'z' && !working && event.target.tagName !== 'INPUT') {
+    event.preventDefault(); (event.shiftKey ? $('redo') : $('undo')).click();
+  }
+});
+async function openEditor(hasLock) {
+  writable = hasLock;
+  let restored;
+  try { db = await openStorage(); restored = await loadSession(db); }
   catch (error) {
-    // Never overwrite a stored record that failed validation or could not be read.
     db?.close(); db = null;
     showError(new Error(`Could not restore browser storage: ${error.message} Saving is disabled to protect existing data. Export new work before closing.`));
   }
-  editor = new Editor(project || createProject()); generation = new Generation(editor);
-  render();
-  for (const id of ['title', 'save', 'add', 'generate', 'export', 'import']) $(id).disabled = false;
-  changed();
+  editor = restored?.editor || new Editor(createProject());
+  working = restored?.working || null; proposal = restored?.proposal || null;
+  generation = new Generation(editor); render();
+  if (!hasLock) {
+    $('save-status').textContent = 'Read-only — another tab is editing';
+    showError(new Error('Another StoryFlow tab owns this draft, or editing locks are unavailable. Close the editing tab and reload to edit here.'));
+    return;
+  }
+  if (proposal && !['complete', 'applied'].includes(proposal.status)) $('run-status').textContent = 'Recovered sample. Review it before adding to your draft.';
+  if (working) $('run-status').textContent = 'Recovered an unapplied paragraph edit. Save or cancel it to continue.';
+  if (db) { changed(); await persist(); }
+  else $('save-status').textContent = 'Storage unavailable — export a backup';
 }
+async function start() {
+  if (!navigator.locks) return openEditor(false);
+  await navigator.locks.request('storyflow-active-editor', { ifAvailable: true }, async lock => {
+    await openEditor(!!lock);
+    if (lock) await new Promise(resolve => addEventListener('pagehide', resolve, { once: true }));
+  });
+}
+addEventListener('pageshow', event => { if (event.persisted) location.reload(); });
 start().catch(showError);

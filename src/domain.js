@@ -1,4 +1,5 @@
 export const MAX_BYTES = 2_000_000;
+export const MAX_HISTORY_BYTES = 8_000_000;
 const MAX_TEXT = 20_000;
 const clone = value => structuredClone(value);
 const id = () => crypto.randomUUID();
@@ -40,20 +41,32 @@ export class Editor {
   commit(next) {
     next = validateProject(next);
     if (JSON.stringify(next) === JSON.stringify(this.project)) return;
+    const revision = this.project.revision + 1;
+    if (!Number.isSafeInteger(revision)) throw new Error('Revision limit reached. Export your project.');
     this.undoStack.push(clone(this.project));
     if (this.undoStack.length > 50) this.undoStack.shift();
     this.redoStack = [];
-    this.project = { ...next, revision: this.project.revision + 1 };
+    this.trimHistory();
+    this.project = { ...next, revision };
     this.epoch++;
   }
   edit(title, paragraphs) { this.commit({ ...this.project, title, paragraphs }); }
   append(text) { this.edit(this.project.title, [...this.project.paragraphs, { id: id(), text }]); }
   restore(direction) {
+    if (!['undo', 'redo'].includes(direction)) throw new Error('Unknown history action.');
     const from = direction === 'undo' ? this.undoStack : this.redoStack;
     const to = direction === 'undo' ? this.redoStack : this.undoStack;
     if (!from.length) return;
+    if (!Number.isSafeInteger(this.project.revision + 1)) throw new Error('Revision limit reached. Export your project.');
     to.push(clone(this.project));
     this.project = { ...from.pop(), revision: this.project.revision + 1 };
+    this.trimHistory();
     this.epoch++;
+  }
+  trimHistory() {
+    while (new TextEncoder().encode(JSON.stringify([this.undoStack, this.redoStack])).length > MAX_HISTORY_BYTES) {
+      if (this.undoStack.length) this.undoStack.shift();
+      else this.redoStack.shift();
+    }
   }
 }

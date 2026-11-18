@@ -1,27 +1,38 @@
-# Initial architecture decision
+# Architecture decision: reliable browser editor
 
 ## Scope
 
-Phase 0 and a small Phase 1 slice: edit and save one draft, validate imports, undo edits, and prevent delayed generation from overwriting newer text. The PDF remains the broader specification; this slice does not implement its full revision graph or review system.
+Phases 0 and 1: edit and recover one draft, validate imports, undo edits, and prevent obsolete generation from overwriting newer text. The PDF remains the broader specification. Its immutable revision graph, visual branches, attention anchors, memory, and continuity review are outside this milestone.
 
-## Decision
+## Stack
 
-Use buildless HTML/CSS and browser-native JavaScript modules, IndexedDB transactions, and Node.js 22+ built-in development and test tools. There are no external runtime dependencies or model downloads. A framework can be reconsidered when interaction complexity warrants it.
+Buildless HTML/CSS and browser-native JavaScript modules, IndexedDB transactions, Web Locks, and Node.js 22+ built-in development/test tools. There are no external runtime dependencies or model downloads. Playwright is pinned as a development-only dependency with a committed npm lockfile. A framework can be reconsidered when interaction complexity warrants it.
 
 ## Boundaries
 
-- `domain.js` owns schema validation, stable paragraph IDs, reversible editing, and monotonically advancing editor ownership. Validation completes before mutation.
-- `storage.js` stores a validated snapshot in a single IndexedDB transaction. The UI serializes saves, reports success only after transaction completion, and protects unreadable stored data from automatic replacement.
-- `generation.js` captures operation, project, branch, revision, and session epoch. Canceled, superseded, or stale operations cannot commit. The single branch ID is groundwork, not an implemented branching UI.
-- `app.js` connects user actions to those services. Story and generated text are rendered with text/value properties, never interpreted as HTML.
+- `domain.js` owns project validation, stable paragraph IDs, reversible editing, revision overflow checks, and monotonically advancing operation ownership. Validation completes before mutation. History is capped at 50 steps and 8 MB combined; large projects prune oldest recovery states.
+- `session.js` defines a versioned internal recovery envelope containing the portable project, bounded undo/redo, one unapplied paragraph edit, and one continuation proposal. It validates recovery data and migrates the original plain project record. Portable project exports stay at schema version 1 and do not expose internal history.
+- `storage.js` reads and writes the envelope transactionally at the existing `projects/active` key. Success is reported only after transaction completion. A blocked/failed open, aborted read, invalid record, quota failure, or aborted write has an explicit failure path. Unreadable data is never overwritten by startup autosave.
+- `generation.js` captures operation, project, branch, revision, and editor epoch. Canceled, superseded, or stale operations cannot commit. Beginning a paragraph edit invalidates an in-flight request even before the edit is applied. The branch ID is groundwork for Phase 2, not an implemented branch explorer.
+- `app.js` manages explicit paragraph Save/Cancel and the UI's unapplied working text, invokes the domain/storage services, serializes checkpoint writes, and renders story text using text/value properties. A successful older save cannot mark a newer edit as saved.
 - `server.mjs` binds only to loopback and allowlists public application files. Git metadata and project documents are not served.
 
-## Recovery and privacy
+## Persistence and recovery
 
-The draft auto-saves after 500 ms of inactivity. Saves are serialized, and the saved indicator corresponds to the current editor epoch. A failed save keeps the draft in memory with an export option and an unsaved-navigation warning. Undo state is session-only. Interrupted fixture output is kept separately in memory and can be downloaded. Browser eviction, cross-tab coordination, and persistent run recovery are not solved in this slice.
+Title changes, paragraph edits, undo/redo, imports, and proposal decisions schedule a checkpoint after a 250 ms pause. Streaming output checkpoints every four chunks, with a final checkpoint on completion/failure/cancel. Generation completion and its appended prose share one snapshot so storage cannot record an applied proposal separately from its draft. Stops and stale results remain proposals; a formerly running proposal becomes interrupted on reload and requires explicit acceptance.
 
-Imports enforce a versioned, bounded schema and reject unknown fields, null paragraphs, duplicate IDs, and oversized text before any mutation. Import replacement is confirmed and undoable. Importing does not execute story content or set credentials. There are no credentials or remote inference requests in this implementation.
+Paragraph text is initially read-only. Edit opens one working copy. Save applies one reversible domain change; Cancel restores its original. An unapplied copy is checkpointed independently and returns after reload. Export includes that visible copy after validation without implicitly committing it. Save draft and Ctrl/Cmd+S apply it and save immediately.
+
+Failed writes leave the in-memory draft intact and retain an unsaved-navigation warning. Retry saving serializes behind prior writes. Successful storage recovery clears storage errors without hiding a separate generation/import error. Failed restore disables writes until reload, protecting the stored record while permitting temporary writing and export.
+
+A same-origin Web Lock grants one tab editing ownership until it closes/navigates away. Another tab can read/export a snapshot but cannot mutate it. It must reload after the owner closes. Browsers without Web Locks open read-only. Restoring a page from the back-forward cache reloads it to reacquire ownership.
+
+## Constraints and privacy
+
+Imports are size-bounded, validate before replacement, require confirmation, and are undoable within retained history. Unknown fields, credentials, null paragraphs, duplicate IDs, and oversized text are rejected. Recovery data is validated separately. No story/model text is executed as markup. There are no credentials or remote model calls in this implementation.
+
+Browser eviction and loss of the latest uncheckpointed keystroke/word remain possible. Exports are the independent backup. Stored history supports local recovery; it does not claim immutable ancestry, branching, or export of a revision tree. No hosted service is necessary for this scope.
 
 ## Next milestone
 
-Expand editor integrity with persistent revision history, draft editing ergonomics, and reload recovery for partial generations before implementing the branch explorer. Add a real provider only behind the same operation-ownership contract and deterministic failure fixtures. No backend is needed for the current slice.
+Phase 2 introduces immutable paragraph versions and revisions, branch heads/ancestry, visual/list navigation, comparison, restore records, and tree-preserving exports with migration. Keep the existing ownership and transaction safeguards. Real model adapters must later honor the same cancellation and stale-result contracts and be tested through deterministic failure fixtures.
