@@ -2,6 +2,7 @@ import { BranchEditor, parseWorkspace, MAX_WORKSPACE_BYTES } from './history.js'
 import { createExplorer } from './explorer.js';
 import { createMemoryUI } from './memoryui.js';
 import { createReviewUI } from './reviewui.js';
+import { createCanvas } from './canvas.js';
 import { openStorage, loadSession, saveSession } from './storage.js';
 import { snapshot } from './session.js';
 import { Generation, offlineContinuation } from './generation.js';
@@ -13,6 +14,7 @@ let errorSource = null;
 let explorer;
 let memory;
 let review;
+let canvas;
 const showError = (error, source = 'action') => { errorSource = source; $('error').textContent = error.message; $('error').hidden = false; };
 const clearError = () => { errorSource = null; $('error').hidden = true; };
 const savedText = () => working ? 'Recovery checkpoint saved — paragraph not applied' : 'Saved in this browser';
@@ -36,6 +38,7 @@ function updateControls() {
   explorer?.updateControls();
   memory?.updateControls();
   review?.updateControls();
+  canvas?.updateControls();
 }
 function changed() {
   dirty = true; sequence++;
@@ -113,9 +116,14 @@ function render() {
       const edit = button(`Edit passage ${index + 1}`, () => beginEdit(paragraph));
       edit.dataset.editId = paragraph.id; edit.disabled = !writable || !!working; actions.append(edit);
     }
-    section.append(label, input, actions); $('paragraphs').append(section);
+    const prose = document.createElement('div'); prose.className = 'canvas-prose'; prose.dataset.paragraphId = paragraph.id;
+    // The native read-only field supplies accessible prose; spans are its visual presentation.
+    prose.setAttribute('aria-hidden', 'true'); prose.hidden = !input.readOnly;
+    prose.ondblclick = () => beginEdit(paragraph);
+    input.tabIndex = input.readOnly ? -1 : 0;
+    section.append(label, prose, input, actions); $('paragraphs').append(section);
   });
-  renderProposal(); updateControls(); explorer?.render(); memory?.render(); review?.render();
+  renderProposal(); updateControls(); explorer?.render(); memory?.render(); review?.render(); canvas?.render();
 }
 function renderProposal() {
   $('proposal').hidden = !proposal; $('preview').textContent = proposal?.text || '';
@@ -131,7 +139,7 @@ function download(content, name, type) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 $('title').addEventListener('input', () => {
-  try { editor.edit($('title').value, editor.project.paragraphs); changed(); explorer.render(); memory.render(); review.render(); }
+  try { editor.edit($('title').value, editor.project.paragraphs); changed(); explorer.render(); memory.render(); review.render(); canvas.render(); }
   catch (error) { $('title').value = editor.project.title; showError(error); }
 });
 $('save').onclick = () => { if (applyEdit()) persist(); };
@@ -182,6 +190,7 @@ $('generate').onclick = async () => {
       !confirm('Replace the recoverable sample with a new run? Export its text first if you want to keep it.')) return;
   let operation;
   try {
+    if (!canvas.atEnd()) canvas.prepare();
     const context = memory.prepare();
     if (context.status === 'blocked') throw new Error(`Required instructions and locked facts need ${context.requiredTokens} estimated input tokens. Increase the memory context budget or explicitly unlock a rule. No sample started.`);
     operation = generation.begin(context);
@@ -245,6 +254,8 @@ async function openEditor(hasLock) {
     onMutation: () => { render(); changed(); $('run-status').textContent = running ? 'Path changed. Running output remains owned by its original branch.' : 'Branch history updated.'; }, onError: showError });
   memory = createMemoryUI({ getEditor: () => editor, canMutate: () => writable && !working, onMutation: () => { render(); changed(); }, onError: showError });
   review = createReviewUI({ getEditor: () => editor, canMutate: () => writable && !working, onMutation: () => { render(); changed(); }, onStateChange: changed, persist, onError: showError, download });
+  canvas = createCanvas({ getEditor: () => editor, canWrite: () => writable && !working && !running,
+    onMutation: () => { render(); changed(); }, onBeginWriting: () => beginEdit(editor.project.paragraphs.at(-1)), onError: showError });
   render();
   if (!hasLock) {
     $('save-status').textContent = 'Read-only — another tab is editing';

@@ -6,7 +6,7 @@ The writer retains final authority over the prose and the facts of the story.
 
 ## Current status
 
-**Phase 5 complete for the evaluated local preview (v0.5.0).** The full local journey is tested from editing and branching through approved memory, offline continuation, cited continuity repair, reload, and export/import. Section navigation, keyboard focus, enlarged-text reflow, automated accessibility audits, in-app help, and reproducible evaluation are included. See [release notes](RELEASE_NOTES.md), [verification](VERIFICATION.md), [evaluation results](docs/evaluation.md), and [accessibility evidence](docs/accessibility.md).
+**Phase 5 complete for the evaluated local preview. v0.6.0 adds the reference-inspired writing canvas and movable ⊕ story cursor.** The full local journey is tested from editing and branching through approved memory, offline continuation, cited continuity repair, reload, and export/import. Section navigation, keyboard focus, enlarged-text reflow, automated accessibility audits, in-app help, and reproducible evaluation are included. See [release notes](RELEASE_NOTES.md), [verification](VERIFICATION.md), [evaluation results](docs/evaluation.md), and [accessibility evidence](docs/accessibility.md).
 
 The reviewer supports explicit definite-object possession conflicts and matching can/cannot statements. It abstains on unsupported syntax, dialogue, uncertainty, temporal cues, and intervening recovery. Memory and review use conservative local rules. No model calls, learned embeddings, or measured general continuity accuracy are claimed. Real providers and steering controls remain planned.
 
@@ -26,7 +26,7 @@ What works now:
 - A streamed offline sample with cancellation, checkpointed partial/stale output, and project/branch/revision ownership checks. Interrupted output is restored as a proposal, never automatically appended.
 - Retryable save errors, preservation of unreadable stored data, and a single-tab editing lock.
 - Bounded continuity review with cited conflicts, approval-only editable patches, undo, branch-local intentional exceptions, checkpoints, and prose-free trace exports.
-- Fifty-nine Node regression tests, thirty reproducible evaluation cases, and thirty-eight automated browser acceptance scenarios, plus a CI workflow. See [verification](VERIFICATION.md) for exact results and environment limits.
+- Sixty-four Node regression tests, thirty reproducible evaluation cases, and forty-three automated browser acceptance scenarios, plus a CI workflow. See [verification](VERIFICATION.md) for exact results and environment limits.
 
 The local preview release gate is complete. Real model integration, visual steering, held-out quality evaluation, writer studies, and manual assistive-technology testing remain open before the intended AI product can be released.
 
@@ -119,6 +119,8 @@ StoryFlow/
 |-- src/app.js                       UI coordination and serialized saves
 |-- src/domain.js                    Project validation and reversible editing
 |-- src/history.js                   Immutable revision graph and branch rules
+|-- src/cursor.js                    Exact word boundaries and validated story prefixes
+|-- src/canvas.js                    Draggable/keyboard story cursor and canvas UI
 |-- src/explorer.js                  Branch tree, revision inspection, and comparison UI
 |-- src/memory.js                    Memory lifecycle, evidence, retrieval, and budgets
 |-- src/memoryui.js                  Approval queue, evidence inspector, and context preview
@@ -169,6 +171,20 @@ Open **http://127.0.0.1:4173** in a current browser with IndexedDB and Web Locks
 
 Export a project JSON backup before clearing browser data or replacing a project. Export preserves the entire branch/revision graph; a visible unapplied edit becomes an export-only revision without changing the editor. If an edit cannot fit within the history limits, Export project backs up the committed graph and explicitly asks you to use **Export edit text** for the pending words. The separate sample panel still needs **Export sample text**. Import and **New project** keep one previous-project recovery copy for immediate Undo/Redo; that copy is replaced by the next project replacement and cleared by a prose, branch, memory, or review mutation.
 
+### Write with the ⊕ story cursor
+
+The writing canvas follows the dark, minimal, monospace direction of [Story Steer Studio](https://story-steer-studio-visha.vishalfulsundar2024.chatgpt.site/) ([reference source](https://github.com/vishalgwu/story-steer-studio)). It adapts the writing interaction onto StoryFlow's existing immutable history and recovery system; it does not import the reference's provider integrations or steering dials.
+
+- Drag the ⊕ circle backward or forward to a word, or focus it and use Left/Right (Up/Down also work). Home selects the beginning; End, double-click, or **Return cursor to end** selects the end. Clicking a word also selects its boundary. Moving the cursor only changes the selection; later words dim without changing saved prose.
+- Click the circle to open its menu, then **Write a passage here**, or use **⊕ Write here** directly. At an earlier point, StoryFlow atomically creates a **Cursor alternative** branch with the exact prefix and a blank new passage. Your original ending stays on its original branch. Type and use normal **Save changes** / **Cancel edit**; unapplied writing uses the existing reload recovery. Cancel leaves the blank passage; Undo can recover the preceding revision.
+- **Generate next ↗** uses the offline sample engine. At an earlier point it creates the same safe prefix branch before preparing context and starting the existing stream. Generation cancellation/stale ownership checks and retained partial output still apply. If preparation fails, the prefix branch remains recoverable and the original is intact.
+- Double-click prose or choose **Edit passage** to revise existing words. Finish or cancel the edit before moving the writing cursor. Cursor writing is disabled in read-only tabs and while a generation runs.
+- Cursor selection is temporary and returns to the end after a revision, branch/project change, or reload. Its position is not portable export data; committed writing and alternative branches are.
+
+Design reference: [Story Steer Studio](https://story-steer-studio-visha.vishalfulsundar2024.chatgpt.site/) and its [source repository](https://github.com/vishalgwu/story-steer-studio).
+
+The circle is a continuation cursor, not a model-attention control. Live AI and tone/tension steering remain separate unfinished features. Existing Branches, Memory, Continuity, backups, and Help remain available below the writing canvas and through the section links.
+
 ### Explore branches and history
 
 1. Enter a **Branch name** and choose **Fork current draft**. An empty name creates a unique Alternative name. The original branch remains unchanged.
@@ -188,7 +204,7 @@ Running output stays owned by its original branch. Switching away and back still
 4. Choose **Approve memory**, **Dismiss memory**, or **Save proposal changes**. Saving changed fields resets approval to pending. Accepted plans and inferences are retained as separate records and are never authoritative continuation constraints. Only accepted facts can be locked.
 5. Set a topic/entity query, a writer-assigned narrative time step, and an optional character viewpoint; blank viewpoint means reader. Time ranges include both endpoints. Unspecified character knowledge is unknown, not automatically shared.
 6. Choose **Prepare context** to inspect facts included/excluded and why, source citations, recent prose excerpts, and the exact prepared context. The UTF-8 byte count is a conservative input-token estimate, not provider usage. Required instructions and eligible locked facts must fit the budget or the request is blocked.
-7. **Try sample continuation** captures that context. The offline fixture reuses the first included claim, or the original lighthouse sample if none is included. **Inspect sample context** shows the original snapshot even after later memory changes.
+7. **Generate next ↗ (offline sample)** captures that context. The offline fixture reuses the first included claim, or the original lighthouse sample if none is included. **Inspect sample context** shows the original snapshot even after later memory changes.
 
 Changing a supporting paragraph marks its facts stale. **Revalidate evidence** links the unchanged quote to its current passage version and resets approval; approve again after review. If the quote is gone or ambiguous, select fresh evidence and propose a new record. Undoing prose to its original version can make that exact source current again.
 

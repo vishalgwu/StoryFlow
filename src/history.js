@@ -1,4 +1,5 @@
 import { createProject, validateProject, MAX_BYTES } from './domain.js';
+import { cursorPrefix } from './cursor.js';
 import { validateMemory, validateContext, addCandidate, extractCandidates, reviseFact, inheritedFactIds } from './memory.js';
 import { validateReviews, startReview, advanceReview, cancelReview, interruptReviews, patchForApproval, decideFinding } from './review.js';
 
@@ -213,6 +214,25 @@ export class BranchEditor {
     });
   }
   append(text, source = 'manual', operationId = null, context = null) { this.edit(this.project.title, [...this.project.paragraphs, { id: uuid(), text }], source, operationId, context); }
+  continueAt(position, writing = null) {
+    const project = this.project, prefix = cursorPrefix(project, position);
+    if (writing !== null && (typeof writing !== 'string' || writing.length > 20_000)) throw new Error('Writing must fit one passage (20,000 characters).');
+    if (prefix.atEnd && writing === null) return false;
+    const paragraphs = [...prefix.paragraphs, ...(writing !== null ? [{ id: uuid(), text: writing }] : [])];
+    const content = validateProject({ ...project, revision: 0, paragraphs });
+    this.#transact(next => {
+      let branch = next.branches.find(b => b.id === next.activeBranchId);
+      if (!prefix.atEnd) {
+        let number = 1; while (next.branches.some(b => b.name === `Cursor alternative ${number}`)) number++;
+        branch = { id: uuid(), name: `Cursor alternative ${number}`, parentBranchId: branch.id, forkRevisionId: branch.headRevisionId,
+          headRevisionId: branch.headRevisionId, archived: false, undo: [], redo: [], memoryFactIds: inheritedFactIds(next, branch.headRevisionId) };
+        next.branches.push(branch); next.activeBranchId = branch.id;
+      }
+      branch.undo.push(branch.headRevisionId); branch.undo = branch.undo.slice(-50); branch.redo = [];
+      addRevision(next, content, prefix.atEnd ? 'Wrote next passage' : 'Continued from story cursor', 'manual');
+    });
+    return !prefix.atEnd;
+  }
   replace(workspace) {
     const next = validateWorkspace(workspace);
     this.#importBackup = { direction: 'undo', workspace: this.workspace }; this.#workspace = next; this.epoch++;

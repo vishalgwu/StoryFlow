@@ -1,3 +1,18 @@
+# v0.6.0: story canvas and movable cursor
+
+The reference site and its source were inspected before implementation. The new dark monospace writing surface provides a inline ⊕ cursor, muted future text, inline editing, and a writing-action dock. It retains StoryFlow's existing domain/storage modules. No reference model adapters or steering dials are claimed.
+
+- `npm run check`: syntax, **64 passing Node tests**, and the unchanged **30-case evaluation**.
+- Browser suite: **43 scenarios**, including five new canvas scenarios and the 38 previous regressions.
+- Five Node cursor tests cover exact Unicode/whitespace/punctuation boundaries, start/passage/end positions, branch preservation, undo/redo/export, stale/foreign ownership rejection, atomic validation failure, and stale evidence after a changed prefix.
+- Five browser scenarios cover pointer drag, forward/backward keyboard movement, double-click return to end, selection without prose mutation, earlier-point writing with reload recovery, generation on a preserved alternative, and menu accessibility/disabled editing guards.
+- The full accessibility audit still covers initial/memory/review states and 320px doubled-text reflow. The renamed generation button uses an accessible name containing its visible label. Existing native read-only textareas remain the accessible representation of prose; visual word spans are marked aria-hidden to avoid duplicate screen-reader text. Editing uses the normal native textarea.
+- Manual local browser review checks the reference-inspired layout and cursor menu. Screenshots are kept outside the repository; CI retains the browser report as before.
+
+Cursor selection is ephemeral and resets after revision/branch/project/reload changes. Starting writing creates a blank passage using normal checkpointed Save/Cancel recovery. An earlier selection forks atomically and never rewrites the original branch. Generation preparation failure may leave a prefix branch, with its original still preserved. No project schema change is required.
+
+---
+
 # Phase 5: evaluated local preview — verification
 
 ## Release gate and scope

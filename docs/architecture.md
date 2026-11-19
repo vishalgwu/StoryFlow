@@ -2,7 +2,7 @@
 
 ## Scope and stack
 
-Phases 0–3 provide a browser-first writing editor, reliable recovery, immutable revision history, independent story branches, and an inspectable local memory workflow. Steering, real model providers, learned semantic retrieval, and continuity review remain planned.
+Phases 0–5 provide a browser-first writing editor, reliable recovery, immutable branches, approved local memory, bounded continuity review, and an evaluated local preview. v0.6.0 adds a story-first canvas and safe continuation cursor. Prompt steering, real model providers, and learned semantic retrieval remain planned.
 
 Use buildless HTML/CSS and browser-native JavaScript modules, IndexedDB, Web Locks, and Node.js 22+ built-in HTTP/test tools. There are no external runtime dependencies or model downloads. Playwright is a pinned development-only dependency with a committed npm lockfile. A framework can be reconsidered when interaction complexity warrants it.
 
@@ -86,3 +86,9 @@ The UI adds section links, a skip link, in-app workflow/recovery guidance, focus
 ## Remaining product work
 
 The local-preview Phase 5 gate is complete. Real provider adapters, visual steering, learned retrieval, held-out quality evaluation, writer research, and manual assistive-technology checks remain open. They need their own implementation and evidence before claiming the intended AI-writing product is complete. Optional Phase 6 expansion remains evidence-driven rather than automatically started.
+
+## Story canvas and continuation cursor (v0.6.0)
+
+`cursor.js` derives UTF-16 word boundaries and validates project/branch/revision ownership before slicing a prefix. `BranchEditor.continueAt` atomically validates and writes either an appended passage or a new prefix branch with a unique Cursor alternative name. Parent prose/history and inherited fact decisions are retained; changed evidence becomes stale under existing rules. The operation uses existing undo pointers and schema 4, including export/import and reload recovery.
+
+`canvas.js` renders the visual words and an inline cursor. It supports click/drag, edge scrolling, keyboard movement, and an explicit writing action. The native read-only textarea is retained as the accessible prose source; visual spans are aria-hidden. New manual writing immediately opens the normal checkpointed paragraph editor. Generation at an earlier cursor first forks the prefix, then uses existing context preparation and generation ownership. No new model call, dial, steering payload, or inference capability is implied by this presentation change. Cursor state is intentionally ephemeral and reset on prose/scope changes.

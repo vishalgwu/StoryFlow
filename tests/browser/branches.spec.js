@@ -75,7 +75,7 @@ test('late completion after switch-away-and-back cannot overwrite either branch'
   await ready(page); await fork(page, 'Second path');
   await page.locator('#branch-select').selectOption({ label: 'Main' }); await saved(page);
   const before = await exported(page);
-  await page.getByRole('button', { name: 'Try sample continuation', exact: true }).click();
+  await page.getByRole('button', { name: 'Generate next ↗ (offline sample)', exact: true }).click();
   await expect(page.locator('#preview')).toContainText('Mara held');
   await page.locator('#branch-select').selectOption({ label: 'Second path' });
   await expect(page.locator('#keep')).toBeDisabled();

@@ -25,7 +25,7 @@ test('propose, inspect evidence, approve, retrieve and consume a fact in an offl
   await expect(page.locator('#memory-evidence mark')).toHaveText(quote);
   await approve(page); await prepare(page);
   await expect(page.locator('#memory-included')).toContainText(quote);
-  await page.getByRole('button', { name: 'Try sample continuation', exact: true }).click();
+  await page.getByRole('button', { name: 'Generate next ↗ (offline sample)', exact: true }).click();
   await expect(page.locator('#run-status')).toContainText('Sample added'); await saved(page);
   await expect(page.getByRole('textbox', { name: 'PASSAGE 2', exact: true })).toHaveValue(new RegExp(quote.replaceAll('.', '\\.')));
   await page.getByRole('button', { name: 'Inspect sample context', exact: true }).click();
@@ -104,7 +104,7 @@ test('locked constraints block an undersized continuation request instead of bei
   await card(page).getByLabel('Lock as a required fact (facts only)', { exact: true }).check();
   await approve(page); await page.getByLabel('Context budget (estimated input tokens)', { exact: true }).fill('256'); await prepare(page);
   await expect(page.locator('#memory-context-status')).toContainText('Blocked');
-  await page.getByRole('button', { name: 'Try sample continuation', exact: true }).click();
+  await page.getByRole('button', { name: 'Generate next ↗ (offline sample)', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('No sample started');
   await expect(page.locator('#paragraphs textarea')).toHaveCount(1); await expect(page.locator('#stop')).toBeDisabled();
   await page.getByLabel('Context budget (estimated input tokens)', { exact: true }).fill('4096'); await prepare(page);
@@ -125,7 +125,7 @@ test('memory exports survive replacement/import; tampered evidence is rejected w
 
 test('memory decisions during streaming invalidate the old completion while preserving its captured context', async ({ page }) => {
   await ready(page); await suggest(page);
-  await page.getByRole('button', { name: 'Try sample continuation', exact: true }).click();
+  await page.getByRole('button', { name: 'Generate next ↗ (offline sample)', exact: true }).click();
   await expect(page.locator('#preview')).toContainText('Mara held');
   await approve(page);
   await expect(page.locator('#run-status')).toContainText('Draft changed'); await saved(page);
@@ -137,7 +137,7 @@ test('memory decisions during streaming invalidate the old completion while pres
 
 test('unsaved memory form edits survive an unrelated continuation rerender', async ({ page }) => {
   await ready(page); await suggest(page);
-  await page.getByRole('button', { name: 'Try sample continuation', exact: true }).click();
+  await page.getByRole('button', { name: 'Generate next ↗ (offline sample)', exact: true }).click();
   await expect(page.locator('#preview')).toContainText('Mara held');
   await card(page).getByText('Edit claim, time, and character knowledge', { exact: true }).click();
   await card(page).getByLabel('Claim', { exact: true }).fill('My unapplied memory correction.');

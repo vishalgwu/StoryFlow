@@ -49,7 +49,7 @@ test('save/cancel, stable paragraph IDs, undo/redo and reload recovery', async (
 
 test('stream completion, cancellation, stale output and reload recovery', async ({ page }) => {
   await ready(page);
-  await page.getByRole('button', { name: 'Try sample continuation', exact: true }).click();
+  await page.getByRole('button', { name: 'Generate next ↗ (offline sample)', exact: true }).click();
   await expect(page.locator('#preview')).toContainText('Mara held');
   await page.getByRole('button', { name: 'Stop', exact: true }).click();
   await expect(page.locator('#run-status')).toContainText('Stopped');
@@ -61,14 +61,14 @@ test('stream completion, cancellation, stale output and reload recovery', async 
   await page.locator('#keep').click();
   await expect(page.locator('#paragraphs textarea')).toHaveCount(2);
   await expect(page.locator('#keep')).toBeDisabled();
-  await page.getByRole('button', { name: 'Try sample continuation', exact: true }).click();
+  await page.getByRole('button', { name: 'Generate next ↗ (offline sample)', exact: true }).click();
   await editFirst(page, 'My manual edit must survive.');
   await saveEdit(page);
   await expect(page.locator('#run-status')).toContainText('Draft changed');
   await expect(page.locator('#paragraphs textarea')).toHaveCount(2);
   await expect(page.getByRole('textbox', { name: 'PASSAGE 1', exact: true })).toHaveValue('My manual edit must survive.');
   page.once('dialog', dialog => dialog.accept());
-  await page.getByRole('button', { name: 'Try sample continuation', exact: true }).click();
+  await page.getByRole('button', { name: 'Generate next ↗ (offline sample)', exact: true }).click();
   await expect(page.locator('#run-status')).toContainText('Sample added');
   await expect(page.locator('#paragraphs textarea')).toHaveCount(3);
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
@@ -77,7 +77,7 @@ test('stream completion, cancellation, stale output and reload recovery', async 
 
 test('reload during stream restores checkpoint as proposal, never commits automatically', async ({ page }) => {
   await ready(page);
-  await page.getByRole('button', { name: 'Try sample continuation', exact: true }).click();
+  await page.getByRole('button', { name: 'Generate next ↗ (offline sample)', exact: true }).click();
   await expect.poll(async () => (await readRecord(page)).proposal?.text.length || 0).toBeGreaterThan(10);
   page.on('dialog', dialog => dialog.accept());
   await page.reload();
@@ -185,7 +185,7 @@ test('stream failure keeps partial output, remains visible after save, and permi
     await route.fulfill({ response, body });
   });
   await ready(page);
-  await page.getByRole('button', { name: 'Try sample continuation', exact: true }).click();
+  await page.getByRole('button', { name: 'Generate next ↗ (offline sample)', exact: true }).click();
   await expect(page.locator('#run-status')).toContainText('Sample failed');
   await expect(page.locator('#save-status')).toHaveText('Saved in this browser');
   await expect(page.getByRole('alert')).toContainText('Injected stream disconnect');

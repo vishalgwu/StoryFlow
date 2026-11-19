@@ -87,7 +87,7 @@ test('release journey preserves original branch, approved memory, repairs and po
   await page.getByRole('button', { name: 'Fork current draft', exact: true }).click(); await saved(page);
   await page.getByRole('button', { name: 'Prepare context', exact: true }).click();
   await expect(page.locator('#memory-included')).toContainText('Elara lost the key.');
-  await page.getByRole('button', { name: 'Try sample continuation', exact: true }).click();
+  await page.getByRole('button', { name: 'Generate next ↗ (offline sample)', exact: true }).click();
   await expect(page.locator('#run-status')).toContainText('added'); await saved(page);
   await expect(page.getByRole('textbox', { name: 'PASSAGE 2', exact: true })).toHaveValue(/Elara lost the key\./);
   await edit(page, 2, 'Elara carries the key.');

@@ -10,7 +10,7 @@
 </head>
 <body>
   <a class="skip-link" href="#draft">Skip to story editor</a>
-  <header><a class="brand" href="/">StoryFlow<span>WRITING STUDIO</span></a><span class="badge">LOCAL DRAFT · EARLY PREVIEW</span></header>
+  <header><a class="brand" href="/"><span class="brand-symbol" aria-hidden="true">⊕</span> STORYFLOW <span class="brand-studio">STUDIO</span></a><span class="badge">LOCAL DRAFT / OFFLINE SAMPLE</span><a class="setup-link" href="#history" aria-label="Open studio tools">⚙</a></header>
   <nav class="studio-nav" aria-label="Studio sections"><a href="#draft">Write</a><a href="#history">Branches</a><a href="#memory">Memory</a><a href="#continuity">Continuity</a><a href="#help">Help</a></nav>
   <main>
     <h1 class="visually-hidden">StoryFlow writing studio</h1>
@@ -22,17 +22,21 @@
       <div class="paper">
         <label class="eyebrow" for="title">YOUR STORY</label>
         <input id="title" aria-label="Story title" maxlength="200" disabled>
-        <p class="hint">Make room for the next possibility.</p>
-        <div id="paragraphs"></div>
-        <button id="add" class="quiet" disabled>+ Add paragraph</button>
+        <p class="canvas-kicker">01 / A LIVING DRAFT <span>YOUR WORDS. EVERY POSSIBLE PATH.</span></p>
+        <div id="story-track"><div id="paragraphs"></div><button id="story-cursor" class="plus-cursor" aria-label="Story cursor" title="Drag to a word. Arrow keys move; Home/End jump; double-click returns to the end." disabled>⊕</button></div>
+        <div class="cursor-controls"><span id="cursor-position">At the end · keep writing</span><button id="cursor-end" hidden>Return cursor to end</button></div>
+        <p id="cursor-hint" class="hint">Drag ⊕ to a word · arrow keys move it · click to write</p>
+        <section id="cursor-composer" aria-label="Write from story cursor" hidden><h2>Continue from here.</h2><p class="hint">Write a new passage at the selected word. An earlier point creates an alternative branch and preserves your original ending. New writing uses the editor's normal save, cancel, and recovery controls.</p><button id="cursor-submit" class="primary">Write a passage here</button><button id="cursor-close">Close cursor menu</button></section>
+        <p id="cursor-feedback" role="status"></p>
       </div>
-      <footer><span id="words">0 words</span><span>Your words stay in this browser.</span></footer>
+      <div class="writing-dock"><nav aria-label="Writing actions"><button id="cursor-write" class="primary">⊕ Write here</button><button id="generate" aria-label="Generate next ↗ (offline sample)" disabled>Generate next ↗</button><button id="add" class="quiet" disabled>+ Add paragraph</button><button id="stop" disabled>Stop</button></nav><p>Write at the circle. Move backward to explore a new ending.</p></div>
+      <footer><span id="words">0 words</span><span>LOCAL ONLY · OFFLINE GENERATION · SAVED ON THIS DEVICE</span></footer>
     </section>
-    <aside>
+    <aside aria-label="Generation and backups">
       <p class="eyebrow">THE NEXT POSSIBILITY</p><h2 class="momentum-heading">A little momentum.</h2>
       <p>Try a sample continuation, then make it your own. Your current draft stays editable while it runs.</p>
       <div class="notice"><strong>Offline template demo</strong><p>This deterministic sample reuses an approved memory claim when available; otherwise it returns the fixed lighthouse example. No AI model or network service is called.</p></div>
-      <button id="generate" class="primary" disabled>Try sample continuation</button><button id="stop" disabled>Stop</button>
+
       <p id="run-status" role="status">Ready when you are.</p>
       <section id="proposal" hidden><h2>Recoverable sample</h2><p id="proposal-origin" class="hint"></p><p id="preview"></p><button id="keep" disabled>Add to current draft</button><button id="sample-context" hidden>Inspect sample context</button><p class="hint">Samples are checkpointed in this browser. A new run replaces this panel; export the sample text to keep a separate copy.</p><button id="download-partial">Export sample text</button></section>
       <hr><h2>Keep a copy</h2><p>Browser storage can be cleared. Export a backup of your draft.</p>
@@ -76,7 +80,7 @@
       <ol><li>Write a passage. Choose Edit passage, then Save changes or Cancel edit.</li><li>Fork a named branch to explore an alternative while preserving the original.</li><li>Propose saved evidence in Memory. Inspect and approve each fact before reuse.</li><li>Run Continuity review. Inspect both passages and approve an edited repair, dismiss it, or record an intentional exception.</li><li>Export project for an independent backup. Import restores its branches, memory, and review history.</li></ol>
       <details><summary>Keyboard and accessibility</summary><p>Use Tab and Shift+Tab to move through controls, Enter or Space to activate buttons, and arrow keys in selects. The section links skip long panels. In an edited passage, Ctrl/Cmd+Enter saves and Escape cancels. Ctrl/Cmd+S saves the draft. Outside text fields, Ctrl/Cmd+Z undoes and Ctrl/Cmd+Shift+Z redoes.</p></details>
       <details><summary>Recovery and privacy</summary><p>Wait for the saved indicator before closing. Browser storage can be cleared or evicted; export a project backup regularly. A second tab is read-only. If saving fails, use Retry saving or export before closing. Unapplied passage edits recover after reload; unsaved memory and repair form fields do not. Interrupted reviews never resume automatically. This local preview sends no story text to an AI service.</p></details>
-      <p class="hint">Local preview v0.5.0. Continuity rules support only explicit possession and matching can/cannot statements. No findings does not prove consistency. Live AI, visual steering, and cross-device sync are not available.</p>
+      <p class="hint">Local preview v0.6.0. Continuity rules support only explicit possession and matching can/cannot statements. No findings does not prove consistency. Live AI, visual steering, and cross-device sync are not available.</p>
     </section>
   </main>
   <p id="error" class="error" role="alert" hidden></p>

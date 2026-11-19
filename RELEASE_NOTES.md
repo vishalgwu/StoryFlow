@@ -1,3 +1,13 @@
+# v0.6.0 — the story is the writing surface
+
+A dark, minimal, monospace canvas inspired by the supplied Story Steer Studio reference. Move the ⊕ cursor backward or forward through the words, return to the end, and write a whole story a passage at a time. Writing/generating at an earlier point creates an alternative and preserves the previous ending. New writing uses the existing checkpointed paragraph editor, rather than a separate unprotected draft field.
+
+The circle supports pointer dragging, edge scrolling, keyboard arrows/Home/End, click-to-open writing actions, and double-click-to-end. Read-only/editing/generation guards remain enforced. Existing memory, continuity, revisions, export/import, and offline generation remain available. No live AI or prompt-steering controls are added in this UI release.
+
+Validation: 64 Node tests, 30 evaluation cases, and 43 browser scenarios. Existing schema 4 and storage origin are unchanged; export a backup before clearing browser data. Cursor selection is temporary; committed writing and branches persist. See README and VERIFICATION for controls and limitations.
+
+---
+
 # v0.5.0 — evaluated local preview
 
 Phase 5 completes the documented **local preview** release gate: reproducible baseline evaluation, automated accessibility checks, keyboard/reflow fixes, in-app guidance, and one complete writing-to-backup acceptance journey. The intended live AI and visual-steering product is not yet complete.
