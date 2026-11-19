@@ -1,6 +1,7 @@
 import { BranchEditor, parseWorkspace, MAX_WORKSPACE_BYTES } from './history.js';
 import { createExplorer } from './explorer.js';
 import { createMemoryUI } from './memoryui.js';
+import { createReviewUI } from './reviewui.js';
 import { openStorage, loadSession, saveSession } from './storage.js';
 import { snapshot } from './session.js';
 import { Generation, offlineContinuation } from './generation.js';
@@ -11,6 +12,7 @@ let dirty = false, timer, sequence = 0, saveQueue = Promise.resolve(), writable 
 let errorSource = null;
 let explorer;
 let memory;
+let review;
 const showError = (error, source = 'action') => { errorSource = source; $('error').textContent = error.message; $('error').hidden = false; };
 const clearError = () => { errorSource = null; $('error').hidden = true; };
 const savedText = () => working ? 'Recovery checkpoint saved — paragraph not applied' : 'Saved in this browser';
@@ -19,8 +21,8 @@ function updateControls() {
   $('title').disabled ||= !!working;
   $('add').disabled ||= !!working || editor.project.paragraphs.length >= 200;
   $('generate').disabled ||= !!working || running;
-  $('import').disabled ||= !!working || running;
-  $('new-project').disabled ||= !!working || running;
+  $('import').disabled ||= !!working || running || !!review?.controller.active;
+  $('new-project').disabled ||= !!working || running || !!review?.controller.active;
   $('undo').disabled = !writable || !!working || !editor.undoStack.length;
   $('redo').disabled = !writable || !!working || !editor.redoStack.length;
   $('stop').disabled = !running;
@@ -33,6 +35,7 @@ function updateControls() {
   $('words').textContent = `${editor.project.paragraphs.map(p => p.text).join(' ').trim().split(/\s+/).filter(Boolean).length} words`;
   explorer?.updateControls();
   memory?.updateControls();
+  review?.updateControls();
 }
 function changed() {
   dirty = true; sequence++;
@@ -112,7 +115,7 @@ function render() {
     }
     section.append(label, input, actions); $('paragraphs').append(section);
   });
-  renderProposal(); updateControls(); explorer?.render(); memory?.render();
+  renderProposal(); updateControls(); explorer?.render(); memory?.render(); review?.render();
 }
 function renderProposal() {
   $('proposal').hidden = !proposal; $('preview').textContent = proposal?.text || '';
@@ -128,7 +131,7 @@ function download(content, name, type) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 $('title').addEventListener('input', () => {
-  try { editor.edit($('title').value, editor.project.paragraphs); changed(); explorer.render(); memory.render(); }
+  try { editor.edit($('title').value, editor.project.paragraphs); changed(); explorer.render(); memory.render(); review.render(); }
   catch (error) { $('title').value = editor.project.title; showError(error); }
 });
 $('save').onclick = () => { if (applyEdit()) persist(); };
@@ -158,16 +161,16 @@ $('export').onclick = () => {
 $('export-edit').onclick = () => { if (working) download(working.text, 'storyflow-paragraph-edit.txt', 'text/plain'); };
 $('import').onclick = () => { $('file').value = ''; $('file').click(); };
 $('new-project').onclick = () => {
-  if (!writable || working || running || !confirm('Start a new project? Export the current project first to keep an independent backup. Undo can restore it until your next edit or branch change.')) return;
+  if (!writable || working || running || review.controller.active || !confirm('Start a new project? Export the current project first to keep an independent backup. Undo can restore it until your next edit or branch change.')) return;
   editor.replace(new BranchEditor().workspace); render(); changed();
   $('run-status').textContent = 'New project started. Undo restores the previous project until your next change.';
 };
 $('file').onchange = async () => {
-  const file = $('file').files[0]; if (!file || !writable || working || running) return;
+  const file = $('file').files[0]; if (!file || !writable || working || running || review.controller.active) return;
   try {
     if (file.size > MAX_WORKSPACE_BYTES) throw new Error('Project exceeds the 20 MB history import limit.');
     const epoch = editor.epoch, next = parseWorkspace(await file.text());
-    if (epoch !== editor.epoch || working || running) throw new Error('Draft changed while reading the file. Try importing again.');
+    if (epoch !== editor.epoch || working || running || review.controller.active) throw new Error('Draft changed while reading the file. Try importing again.');
     if (!confirm('Replace this project with the import? Export a backup first. Undo can restore the previous project until your next edit or branch change.')) return;
     generation.cancel(); editor.replace(next); render(); changed(); clearError();
     $('run-status').textContent = 'Project imported. Undo restores the previous project until your next edit or branch change.';
@@ -241,6 +244,7 @@ async function openEditor(hasLock) {
   explorer = createExplorer({ getEditor: () => editor, canMutate: () => writable && !working,
     onMutation: () => { render(); changed(); $('run-status').textContent = running ? 'Path changed. Running output remains owned by its original branch.' : 'Branch history updated.'; }, onError: showError });
   memory = createMemoryUI({ getEditor: () => editor, canMutate: () => writable && !working, onMutation: () => { render(); changed(); }, onError: showError });
+  review = createReviewUI({ getEditor: () => editor, canMutate: () => writable && !working, onMutation: () => { render(); changed(); }, onStateChange: changed, persist, onError: showError, download });
   render();
   if (!hasLock) {
     $('save-status').textContent = 'Read-only — another tab is editing';

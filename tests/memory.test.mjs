@@ -119,9 +119,10 @@ test('memory and manifests round trip through project export and reload', () => 
 });
 test('schema-v2 projects migrate without inventing facts or changing history IDs', () => {
   const workspace = new BranchEditor().workspace; workspace.schemaVersion = 2; delete workspace.memoryFacts;
+  delete workspace.reviewRuns; delete workspace.reviewExceptions;
   workspace.branches.forEach(b => delete b.memoryFactIds);
   const migrated = parseWorkspace(JSON.stringify(workspace));
-  assert.equal(migrated.schemaVersion, 3); assert.deepEqual(migrated.memoryFacts, []);
+  assert.equal(migrated.schemaVersion, 4); assert.deepEqual(migrated.memoryFacts, []);
   assert.equal(migrated.revisions[0].id, workspace.revisions[0].id);
 });
 test('invalid evidence, foreign scope, malicious fields and context tampering are rejected atomically', () => {

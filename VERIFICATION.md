@@ -1,3 +1,27 @@
+# Phase 4: bounded local continuity review — verification
+
+## Release gate and scope
+
+The local reviewer freezes a branch/revision, approved facts, and exceptions; reports supported possible conflicts with two exact citations; and offers editable repairs requiring approval. It checks definite-object possession and explicit matching can/cannot statements. It abstains on dialogue, uncertainty, time cues, unsupported grammar, intervening recovery, and excessive relevant context. No general semantic accuracy, paid inference, or quality improvement is claimed.
+
+## Automated checks
+
+- `npm run check`: syntax validation and **59 passing Node tests**, including 16 continuity tests.
+- `npm run test:browser`, installed Chrome on Windows: **34 browser scenarios**, including 9 continuity scenarios and all 25 prior regressions.
+- `git diff --check` before commit. GitHub Actions independently runs Node and Chromium checks on main.
+
+The Node suite covers exact citations, no automatic prose changes, edited approval, atomic audit/undo, stale base and changed-memory rejection, branch/time/knowledge filters, unsupported-language abstention, budget exits, partial results, cancel, exceptions/reconsideration, generation ownership, interrupted recovery, malformed imports, failure isolation, and budgeted recovery evidence outside the selected range.
+
+Browser scenarios cover editable replacement/approval/undo, stale patches after writing, intentional exceptions and reconsideration, partial results and prose-free trace downloads, cancel while editing, interrupted reload, injected review failure with continued editing/saving, recovery/dialogue abstention, branch switching during a frozen run, and export/import validation.
+
+## Limits and recovery
+
+The reviewer is deterministic and deliberately narrow. Zero findings is not proof of consistency. UTF-8 byte estimates are conservative input estimates, not provider usage; actual cost remains zero. Runs are limited by calls, input estimate, elapsed time, and findings, with at most one running review. Evidence retrieval includes a bounded number of relevant intervening passages; ambiguity leads to abstention.
+
+Budget-exhausted partial findings remain eligible for explicit approval if fresh. Canceled, failed, and interrupted findings are inspectable only. Reload interrupts instead of silently resuming. One applied patch changes the base and makes remaining old-base proposals stale. Exceptions suppress an exact signature on their own branch until reconsidered. Review progress is persisted through the normal save queue; pending form edits remain session-only. Runs/exceptions survive schema-v4 exports and imports; older schemas migrate without invented review history.
+
+---
+
 # Phase 3: evidence-backed local memory — verification
 
 ## Release gate and scope

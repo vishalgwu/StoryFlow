@@ -9,7 +9,7 @@ Use buildless HTML/CSS and browser-native JavaScript modules, IndexedDB, Web Loc
 ## Domain boundaries
 
 - `domain.js` retains schema-v1 validation and the original editor for reading released recovery data. Its legacy snapshot limits apply only to that format.
-- `history.js` owns schema-v3 workspace validation, immutable revisions/paragraph versions, branch transactions, lineage, restore, comparison, memory mutations, and legacy migration. Public workspace/project access returns copies. Each mutation validates a candidate workspace before replacing live state. True no-ops retain operation ownership and project-replacement recovery.
+- `history.js` owns schema-v4 workspace validation, immutable revisions/paragraph versions, branch transactions, lineage, restore, comparison, memory mutations, and legacy migration. Public workspace/project access returns copies. Each mutation validates a candidate workspace before replacing live state. True no-ops retain operation ownership and project-replacement recovery.
 - `memory.js` owns candidate extraction, immutable fact decision versions, source-span validation, branch inheritance, stale-evidence checks, narrative validity, character knowledge, context ranking, budgets, and manifest validation. It has no DOM or model/network dependency.
 - `memoryui.js` owns the review queue, memory forms, source inspector, and included/omitted context explanations. It never silently approves extracted candidates. In-memory form buffers preserve fields, open state, focus, and caret across unrelated rerenders; only explicit save/approval persists metadata.
 - `explorer.js` renders the branch tree/list, revision inspector, and comparison controls. Mutations call domain methods through a shared UI coordination path. A native branch selector and ordinary labeled buttons provide keyboard access without dragging.
@@ -35,9 +35,9 @@ Validation rejects missing/duplicate IDs, broken heads, invalid version referenc
 
 Schema-v1 imports become a Main branch with a migration revision. Released Phase 1 recovery snapshots become immutable revisions on that branch, retaining current project/paragraph IDs and recovered undo/redo content. Unapplied paragraph edits and branch-scoped samples survive migration. A running sample becomes interrupted on reload and never appends automatically. Failed migration follows the same write-disabled recovery path as invalid stored data.
 
-Portable exports contain the full schema-v3 graph, archive flags, action pointers, memory decision history, supporting source spans, and committed generation contexts. They use compact JSON so whitespace cannot push a valid near-limit export over its import budget. A visible working paragraph becomes an export-only revision without silently changing the editor. If it cannot fit, the app explicitly exports committed history and offers a separate pending-text export. Sample-panel text is exported separately. Unsaved memory form fields are not exported.
+Portable exports contain the full schema-v4 graph, archive flags, action pointers, memory decision history, supporting source spans, and committed generation contexts. They use compact JSON so whitespace cannot push a valid near-limit export over its import budget. A visible working paragraph becomes an export-only revision without silently changing the editor. If it cannot fit, the app explicitly exports committed history and offers a separate pending-text export. Sample-panel text is exported separately. Unsaved memory form fields are not exported.
 
-Import and New project retain one previous workspace for immediate Undo/Redo, including reload recovery. A subsequent prose, branch, or memory mutation clears that backup. It is not exported with the current project and may add another 20 MB to browser storage. Confirmation asks the writer to export an independent backup first.
+Import and New project retain one previous workspace for immediate Undo/Redo, including reload recovery. A subsequent prose, branch, memory, or review mutation clears that backup. It is not exported with the current project and may add another 20 MB to browser storage. Confirmation asks the writer to export an independent backup first.
 
 ## Memory lifecycle and scope
 
@@ -67,6 +67,16 @@ A same-origin Web Lock grants one editing tab. Another tab can inspect/export bu
 
 Periodic checkpoints cannot guarantee the latest keystroke or word survives a crash, and browser storage may be evicted. Exports are the independent backup. There are no credentials, remote inference calls, server-side database, synchronization, or hosted service in this milestone.
 
+## Bounded continuity review (Phase 4)
+
+Schema 4 adds review runs and intentional exceptions; schemas 1–3 migrate with empty review history. `review.js` freezes branch, revision, eligible accepted fact decisions, exception IDs, time/viewpoint, range, and resource settings. A resumable cursor advances local read/retrieve/propose stages with bounded calls, estimated UTF-8 input bytes, elapsed time, findings, and zero cost. `reviewui.js` exposes status, cancellation, citations, editable proposals, decisions, and trace export. Review progress does not change generation ownership; applying a repair does.
+
+Only definite-object possession and matching explicit can/cannot statements are supported. Dialogue, uncertainty, temporal cues, unsupported syntax, intervening transitions, and excessive relevant context cause abstention. Relevant intervening passages outside the selected target range are retrieved and charged before checking recovery. This is a conservative rule baseline, not a general semantic checker.
+
+Every finding retains immutable source and target spans plus exact patch preconditions. Applying requires the active branch, unchanged base head, current eligible fact decision, and exact target paragraph version/text. The transaction writes one paragraph and a source-review revision with a validated applied audit; unrelated paragraphs and title cannot change. Approval is explicit and undoable. A changed head makes remaining proposals stale. Intentional exceptions are exact-signature, branch-local records with reasons and reconsideration history.
+
+Checkpoints retain partial findings. Budget exhaustion may permit explicit approval of fresh partial results; canceled, failed, or reload-interrupted runs are read-only. Reload never resumes review automatically. Runs are capped at 100 and exceptions at 200 within the existing 20 MB workspace limit. Trace exports contain IDs/settings/operation counters and exit reasons without prose or patch text; portable project exports retain full evidence and decisions. Validation rejects malformed scope, citations, counters, patches, exceptions, and hidden rewrites. Any review mutation clears the immediate import undo backup.
+
 ## Next milestone
 
-Phase 4 adds bounded continuity review: freeze a revision, retrieve approved evidence, report a possible conflict or abstain, and offer preconditioned patches requiring writer approval. Preserve scope, cancellation, budgets, and stale-result checks. Real provider adapters, learned retrieval, and steering require their own documented contracts and verification before claiming the intended AI workflow.
+Phase 5 covers evaluation, accessibility, and release polish. Real providers, learned retrieval, and steering still require implementation and verified contracts before claiming the intended AI workflow or measured quality gains.

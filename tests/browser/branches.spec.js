@@ -105,7 +105,7 @@ test('migrates Phase 1 recovery with unapplied text and stopped sample', async (
   await expect(page.getByRole('textbox', { name: 'PASSAGE 1', exact: true })).toHaveValue('Saved Phase 1 prose.');
   await page.getByRole('button', { name: 'Undo', exact: true }).click(); await saved(page);
   await expect(page.locator('#title')).toHaveValue('Earlier title');
-  const workspace = await exported(page); expect(workspace.schemaVersion).toBe(3); expect(workspace.id).toBe('old-project');
+  const workspace = await exported(page); expect(workspace.schemaVersion).toBe(4); expect(workspace.id).toBe('old-project');
 });
 
 test('malformed graph import preserves the active tree and branch actions block unapplied edits', async ({ page }) => {

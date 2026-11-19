@@ -1,5 +1,6 @@
 import { createProject, validateProject, MAX_BYTES } from './domain.js';
 import { validateMemory, validateContext, addCandidate, extractCandidates, reviseFact, inheritedFactIds } from './memory.js';
+import { validateReviews, startReview, advanceReview, cancelReview, interruptReviews, patchForApproval, decideFinding } from './review.js';
 
 export const MAX_WORKSPACE_BYTES = 20_000_000;
 const copy = value => structuredClone(value);
@@ -46,8 +47,12 @@ export function validateWorkspace(value) {
     value = { ...copy(value), schemaVersion: 3, memoryFacts: [], branches: value.branches.map(b => ({ ...copy(b), memoryFactIds: [] })),
       revisions: value.revisions.map(r => ({ ...copy(r), generation: r.generation ? { ...copy(r.generation), context: null } : null })) };
   }
-  if (!shape(value, ['schemaVersion', 'id', 'activeBranchId', 'branches', 'revisions', 'paragraphVersions', 'memoryFacts']) ||
-      value.schemaVersion !== 3 || !identifier(value.id) || !identifier(value.activeBranchId)) bad('unsupported workspace format.');
+  if (value?.schemaVersion === 3) {
+    if (!shape(value, ['schemaVersion', 'id', 'activeBranchId', 'branches', 'revisions', 'paragraphVersions', 'memoryFacts'])) bad('unsupported legacy memory workspace.');
+    value = { ...copy(value), schemaVersion: 4, reviewRuns: [], reviewExceptions: [] };
+  }
+  if (!shape(value, ['schemaVersion', 'id', 'activeBranchId', 'branches', 'revisions', 'paragraphVersions', 'memoryFacts', 'reviewRuns', 'reviewExceptions']) ||
+      value.schemaVersion !== 4 || !identifier(value.id) || !identifier(value.activeBranchId)) bad('unsupported workspace format.');
   if (bytes(value) > MAX_WORKSPACE_BYTES) bad('history exceeds 20 MB. Export this project and start a new one.');
   const branches = index(value.branches, 50), revisions = index(value.revisions, 5000);
   if (!Array.isArray(value.paragraphVersions) || value.paragraphVersions.length > 20000) bad('too many passage versions.');
@@ -77,7 +82,7 @@ export function validateWorkspace(value) {
   for (const r of revisions.values()) {
     if (!shape(r, ['id', 'branchId', 'parentId', 'title', 'paragraphVersionIds', 'createdAt', 'summary', 'source', 'restoredFrom', 'generation']) ||
         !branches.has(r.branchId) || !text(r.title, 200) || !text(r.summary, 240, true) ||
-        !['initial', 'manual', 'offline', 'undo', 'redo', 'restore', 'migration'].includes(r.source) ||
+        !['initial', 'manual', 'offline', 'undo', 'redo', 'restore', 'migration', 'review'].includes(r.source) ||
         !text(r.createdAt, 30) || !Number.isFinite(Date.parse(r.createdAt)) ||
         !Array.isArray(r.paragraphVersionIds) || r.paragraphVersionIds.length > 200) bad('invalid revision.');
     const owner = branches.get(r.branchId);
@@ -130,6 +135,7 @@ export function validateWorkspace(value) {
   }
   if (usedVersions.size !== versions.size) bad('unreferenced passage versions.');
   validateMemory(value);
+  validateReviews(value);
   for (const revision of revisions.values()) if (revision.generation) validateContext(revision.generation.context, value, revision.branchId);
   return copy(value);
 }
@@ -190,11 +196,11 @@ export class BranchEditor {
   }
   get undoStack() { return this.#importBackup?.direction === 'undo' ? ['import'] : this.branch.undo; }
   get redoStack() { return this.#importBackup?.direction === 'redo' ? ['import'] : this.branch.redo; }
-  #transact(action) {
+  #transact(action, affectsGeneration = true) {
     const next = copy(this.#workspace); action(next); const validated = validateWorkspace(next);
     if (JSON.stringify(validated) === JSON.stringify(this.#workspace)) return;
     this.#workspace = validated;
-    this.#importBackup = null; this.epoch++;
+    this.#importBackup = null; if (affectsGeneration) this.epoch++;
   }
   edit(title, paragraphs, source = 'manual', operationId = null, context = null) {
     const project = this.project;
@@ -259,6 +265,27 @@ export class BranchEditor {
   proposeFact(input) { let result; this.#transact(next => { result = addCandidate(next, input); }); return result; }
   extractFacts(paragraphVersionId = null, narrativeTime = 0) { let count; this.#transact(next => { count = extractCandidates(next, paragraphVersionId, narrativeTime); }); return count; }
   updateFact(factId, updates = {}, status = 'pending', revalidate = false) { let result; this.#transact(next => { result = reviseFact(next, factId, updates, status, revalidate); }); return result; }
+  startReview(options = {}, now = Date.now()) { let result; this.#transact(next => { result = startReview(next, options, now); }, false); return result; }
+  advanceReview(runId, now = Date.now()) { this.#transact(next => advanceReview(next, runId, now), false); }
+  stopReview(runId, status = 'canceled', message) { this.#transact(next => cancelReview(next, runId, status, message), false); }
+  decideFinding(runId, findingId, decision, reason = '') { this.#transact(next => decideFinding(next, runId, findingId, decision, reason), false); }
+  reconsiderException(exceptionId) {
+    this.#transact(next => { const exception = next.reviewExceptions.find(e => e.id === exceptionId && e.branchId === next.activeBranchId); if (!exception) throw new Error('Exception is outside this branch.'); exception.active = false; }, false);
+  }
+  applyReviewPatch(runId, findingId, replacement) {
+    this.#transact(next => {
+      const { run, finding } = patchForApproval(next, runId, findingId, replacement);
+      const project = this.project, content = validateProject({ ...project, revision: 0, paragraphs: project.paragraphs.map(p => p.id === finding.patch.paragraphId ? { ...p, text: replacement } : p) });
+      const branch = next.branches.find(b => b.id === next.activeBranchId); branch.undo.push(branch.headRevisionId); branch.undo = branch.undo.slice(-50); branch.redo = [];
+      const revisionId = addRevision(next, content, 'Accepted continuity repair', 'review');
+      finding.decision = 'applied'; finding.reason = 'Writer approved the replacement.'; finding.appliedRevisionId = revisionId; finding.appliedReplacement = replacement;
+      if (run.status === 'findings_ready' && run.findings.every(f => f.decision !== 'pending')) run.status = 'resolved';
+    });
+  }
+  recoverReviews() {
+    const next = this.workspace; interruptReviews(next); this.#workspace = validateWorkspace(next);
+    if (this.#importBackup) { const prior = copy(this.#importBackup); interruptReviews(prior.workspace); this.#importBackup = { direction: prior.direction, workspace: validateWorkspace(prior.workspace) }; }
+  }
   static fromLegacy(editor) {
     const result = new BranchEditor(migrateProject(editor.project));
     const current = editor.project, states = [...editor.undoStack, current, ...[...editor.redoStack].reverse()];

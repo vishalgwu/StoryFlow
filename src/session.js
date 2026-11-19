@@ -47,7 +47,8 @@ export function restoreSession(record) {
   if (record?.formatVersion === 2) {
     const session = validateSession(record), proposal = session.proposal;
     if (proposal?.status === 'running') proposal.status = 'interrupted';
-    return { editor: new BranchEditor(session.workspace, session.importBackup), working: session.working, proposal };
+    const editor = new BranchEditor(session.workspace, session.importBackup); editor.recoverReviews();
+    return { editor, working: session.working, proposal };
   }
   // Migrate the original plain project record without changing portable exports.
   const session = record?.formatVersion === undefined

@@ -30,7 +30,7 @@ test('propose, inspect evidence, approve, retrieve and consume a fact in an offl
   await expect(page.getByRole('textbox', { name: 'PASSAGE 2', exact: true })).toHaveValue(new RegExp(quote.replaceAll('.', '\\.')));
   await page.getByRole('button', { name: 'Inspect sample context', exact: true }).click();
   await expect(page.locator('#memory-context-status')).toContainText('1 approved facts');
-  const workspace = await exported(page); expect(workspace.schemaVersion).toBe(3);
+  const workspace = await exported(page); expect(workspace.schemaVersion).toBe(4);
   expect(workspace.revisions.at(-1).generation.context.included[0].claim).toBe(quote);
   await page.reload(); await saved(page); await expect(card(page)).toContainText('accepted');
 });

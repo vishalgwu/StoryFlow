@@ -6,13 +6,13 @@ The writer retains final authority over the prose and the facts of the story.
 
 ## Current status
 
-**Phase 3 complete for the local memory workflow.** Writers can propose, inspect, edit, approve, and dismiss source-linked facts; track narrative validity and character knowledge; and prepare budgeted context with explanations. Branches retain independent memory decisions, stale evidence is excluded, and exports preserve memory and its history. Earlier editor and branch safeguards remain in place. See [verification](VERIFICATION.md) for acceptance evidence and limitations.
+**Phase 4 complete for the bounded local continuity workflow.** Reviews freeze a revision and eligible approved facts, cite both passages, explain uncertainty, and propose an editable repair requiring explicit writer approval. Cancellation, resource budgets, partial findings, intentional exceptions, stale-patch rejection, and reload recovery preserve writer control. See [verification](VERIFICATION.md).
 
-Continuity review, steering controls, and real model providers remain planned. Memory extraction uses local sentence/keyword rules, and retrieval uses entities, keywords, and a small synonym lexicon. These are inspectable baselines, not an LLM or learned semantic embedding system. The offline continuation demo consumes a captured context and reuses its first approved claim when available; it makes no AI service calls.
+The reviewer supports explicit definite-object possession conflicts and matching can/cannot statements. It abstains on unsupported syntax, dialogue, uncertainty, temporal cues, and intervening recovery. Memory and review use conservative local rules. No model calls, learned embeddings, or measured general continuity accuracy are claimed. Real providers and steering controls remain planned.
 
 ### Progress checkpoint
 
-**Phases 0–3 are complete for the browser-only editor, branch, and local memory workflows. The next milestone is Phase 4: bounded continuity review.** Progress is tracked by acceptance gates; there is no measured whole-project completion percentage. Continuity review, real AI, learned semantic retrieval, steering, and evaluation remain ahead.
+**Phases 0–4 are complete for their documented local scopes. Next is Phase 5: evaluation, accessibility, and release polish.** There is no measured whole-project completion percentage. Live AI, learned retrieval, and visual steering still need implementation and evaluation.
 
 What works now:
 
@@ -20,14 +20,15 @@ What works now:
 - One active project with multiple independent branches, title/paragraph editing, stable paragraph IDs, IndexedDB autosave, and explicit save status.
 - Explicit paragraph save/cancel, recovery checkpoints for unapplied edits, and branch-local undo/redo that appends immutable recovery revisions and survives reload.
 - Named branches, nested visual/list exploration, fork from an earlier revision, revision comparison, and recoverable restore. Archived branches keep their history and can be reopened.
-- Schema-v3 exports preserve revisions, paragraph versions, branches, archive states, recovery pointers, memory versions, source spans, and captured generation context. Schema-v1/v2 projects and released browser records migrate automatically.
+- Schema-v4 exports preserve revisions, paragraph versions, branches, archive states, recovery pointers, memory versions, source spans, and captured generation context. Schema-v1/v2/v3 projects and released browser records migrate automatically.
 - Pending/accepted/dismissed memory for characters, locations, relationships, world rules, events, threads, and knowledge. Established facts, inferences, and author plans remain distinct.
 - Branch-specific fact decisions, inclusive narrative-time ranges, reader/character knowledge, stale-evidence revalidation, and inspectable context inclusion/exclusion reasons.
 - A streamed offline sample with cancellation, checkpointed partial/stale output, and project/branch/revision ownership checks. Interrupted output is restored as a proposal, never automatically appended.
 - Retryable save errors, preservation of unreadable stored data, and a single-tab editing lock.
-- Forty-three Node regression tests and twenty-five automated browser acceptance scenarios, plus a CI workflow. See [verification](VERIFICATION.md) for exact results and environment limits.
+- Bounded continuity review with cited conflicts, approval-only editable patches, undo, branch-local intentional exceptions, checkpoints, and prose-free trace exports.
+- Fifty-nine Node regression tests and thirty-four automated browser acceptance scenarios, plus a CI workflow. See [verification](VERIFICATION.md) for exact results and environment limits.
 
-Next, build a bounded continuity reviewer that retrieves evidence, emits inspectable findings, and proposes edits requiring writer approval. Real model integration and visual steering still need implementation before the intended AI-writing workflow can be demonstrated end to end.
+Next, evaluate the complete workflow and improve accessibility and release readiness. Real model integration and visual steering still need implementation before the intended AI-writing workflow can be demonstrated end to end.
 
 The blueprint uses **Story Steer Studio** as the product name; **StoryFlow** is the repository name. Its references to an earlier prototype and historical test results are design context, not implemented features or verification results for this repository.
 
@@ -63,9 +64,9 @@ Memory must respect branch ancestry and narrative time. Events from a sibling br
 
 ### Bounded continuity review
 
-Review a selected chapter against relevant accepted facts. Findings will cite source passages, explain uncertainty, and optionally propose minimal edits.
+Review a selected passage range against eligible accepted facts. Supported local findings cite both source passages, explain uncertainty, and propose a minimal edit.
 
-The writer can accept, edit, dismiss, or mark a finding as an intentional exception. Proposed edits require approval and must match the current source text before application. Reviews will have explicit cancellation and resource budgets.
+The writer can apply an edited replacement, dismiss a finding, or record an intentional exception. Proposed edits require approval and must match the exact current branch, revision, fact decision, and passage. Reviews have cancellation and explicit resource budgets.
 
 ## Design principles
 
@@ -97,7 +98,7 @@ The implementation uses browser-native JavaScript modules, HTML/CSS, IndexedDB, 
 | 1 | Editor integrity, persistence validation, undo, cancellation | Complete for the local single-draft scope | Save/cancel, undo/reload, import safety, cancellation, stale ownership, and storage-failure scenarios pass automated checks |
 | 2 | Immutable revisions and visual branches | Complete for the local branch workflow | Fork, compare, restore, migration, and export preserve independent histories; browser switching cannot accept stale completions |
 | 3 | Approved, passage-linked story memory | Complete for the local baseline | Approval/evidence links, distant retrieval, branch/time/knowledge filtering, stale revalidation, context budgets, and persistence are tested |
-| 4 | Bounded continuity review | Not started | Findings cite evidence and patches require approval and valid preconditions |
+| 4 | Bounded continuity review | Complete for the conservative local baseline | Findings cite evidence and patches require approval and valid preconditions |
 | 5 | Evaluation, accessibility, and release polish | Not started | The main writing journey works end to end and claims match measured results |
 
 Phase 6 in the blueprint is optional, evidence-driven expansion (for example, cross-device sync or collaboration), beyond the initial product described above. It has not started.
@@ -121,6 +122,8 @@ StoryFlow/
 |-- src/explorer.js                  Branch tree, revision inspection, and comparison UI
 |-- src/memory.js                    Memory lifecycle, evidence, retrieval, and budgets
 |-- src/memoryui.js                  Approval queue, evidence inspector, and context preview
+|-- src/review.js                    Bounded review, citations, budgets, and patch validation
+|-- src/reviewui.js                  Findings, approval, exceptions, and trace UI
 |-- src/session.js                   Validated recovery snapshots and migration
 |-- src/storage.js                   IndexedDB persistence
 |-- src/generation.js                Request ownership and offline fixture
@@ -158,7 +161,7 @@ Open **http://127.0.0.1:4173** in a current browser with IndexedDB and Web Locks
 - **Retry saving** becomes available after a failed write. Export a backup while storage is unavailable.
 - A second tab opens read-only while another tab owns the draft. Close the owner and reload the other tab to edit there.
 
-Export a project JSON backup before clearing browser data or replacing a project. Export preserves the entire branch/revision graph; a visible unapplied edit becomes an export-only revision without changing the editor. If an edit cannot fit within the history limits, Export project backs up the committed graph and explicitly asks you to use **Export edit text** for the pending words. The separate sample panel still needs **Export sample text**. Import and **New project** keep one previous-project recovery copy for immediate Undo/Redo; that copy is replaced by the next project replacement and cleared by a prose, branch, or memory mutation.
+Export a project JSON backup before clearing browser data or replacing a project. Export preserves the entire branch/revision graph; a visible unapplied edit becomes an export-only revision without changing the editor. If an edit cannot fit within the history limits, Export project backs up the committed graph and explicitly asks you to use **Export edit text** for the pending words. The separate sample panel still needs **Export sample text**. Import and **New project** keep one previous-project recovery copy for immediate Undo/Redo; that copy is replaced by the next project replacement and cleared by a prose, branch, memory, or review mutation.
 
 ### Explore branches and history
 
@@ -187,6 +190,16 @@ A fork copies the current decision versions available at its selected revision. 
 
 Memory form fields are saved only by **Save proposal changes** or **Approve memory**. Up to 100 in-memory form drafts are retained during navigation/rerenders, including focus preservation; they are not reload recovery or export data. Prose undo/redo does not undo memory decisions; make another explicit memory decision to revise one.
 
+### Review continuity
+
+1. Save prose and approve its supporting memory facts. Open **Continuity review**, choose a revision, passage range, narrative time, and reader/character viewpoint. Historical revisions are inspectable; applying a patch requires the exact current branch head.
+2. Set call, estimated-input-token, wall-time, and finding budgets, then start review. The local reviewer costs zero and makes no network calls. It checks only explicit possession and matching can/cannot conflicts; absence of findings does not establish consistency.
+3. Inspect both immutable passages and the uncertainty explanation. Edit **Proposed replacement**, then choose **Apply patch**, **Dismiss finding**, or enter a reason and mark an intentional exception. Applying changes exactly one passage, records an audit revision, and supports Undo. Other findings from that old base become stale; rerun review after an edit.
+4. Cancel at any time. Budget exhaustion retains partial findings that can still be approved if current. Canceled, failed, and interrupted runs retain inspectable findings but cannot apply them. Reload interrupts a running review without resuming it automatically. Writing and saving remain available during review.
+5. Download the review trace for settings, IDs, operations, estimated usage, abstention counts, and exit reason. It excludes prose, evidence quotes, and replacement text; project exports retain the full review. Exceptions suppress only the exact finding signature on that branch and can be reconsidered. They are not inherited by forks.
+
+Edited replacement/reason form drafts are session-only until a decision is saved. Review progress is checkpointed through the normal save queue. Starting a review clears the immediate previous-project undo backup, so export first for a durable backup. Input usage is a conservative byte-based estimate, not model billing. Relevant intervening context is bounded; excessive or ambiguous context leads to abstention.
+
 ```sh
 npm run check
 # Or run only the regression suite:
@@ -209,8 +222,8 @@ The server is for local development and serves only application assets. It is no
 
 - One active draft per browser origin, with a Web Lock preventing concurrent editing in multiple tabs. Browsers without Web Locks open read-only.
 - Each branch keeps up to 50 undo/redo action pointers. Immutable revisions and passage versions are not pruned. The old Phase 1 recovery format's 8 MB history budget applies only when reading legacy records.
-- Project JSON is schema version 3, with limits of 20 MB, 50 branches, 5,000 revisions, 20,000 paragraph versions, 2,000 memory decision versions, and 500 current memory records per branch. Each prose revision retains the 2 MB/200-paragraph/20,000-character limits. At a cap, mutation is refused without deleting history; export and use **New project** to continue separately.
-- Schema-v1/v2 imports are supported and migrated without inventing memory. Unknown fields, broken references, cycles, sibling ancestry leaks, altered evidence, duplicate IDs, and unsupported records are rejected before replacement.
+- Project JSON is schema version 4, with limits of 20 MB, 50 branches, 5,000 revisions, 20,000 paragraph versions, 2,000 memory decision versions, and 500 current memory records per branch, 100 review runs, and 200 intentional exceptions. Each prose revision retains the 2 MB/200-paragraph/20,000-character limits. At a cap, mutation is refused without deleting history; export and use **New project** to continue separately.
+- Schema-v1/v2/v3 imports are supported and migrated without inventing memory. Unknown fields, broken references, cycles, sibling ancestry leaks, altered evidence, duplicate IDs, and unsupported records are rejected before replacement.
 - Import/New project require confirmation and retain one immediate project-replacement undo copy. This backup can add another 20 MB to browser storage, but is not included in portable exports. Export first for a durable backup.
 - Checkpoints are periodic, not a guarantee against losing the latest keystroke or streamed word during a crash. Wait for the saved indicator or export before closing. Starting a new run replaces the saved sample panel after confirmation when needed.
 - Storage failures are surfaced; if stored data cannot be restored, saving is disabled to avoid overwriting it. Export any new work before closing.
