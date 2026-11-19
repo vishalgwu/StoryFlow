@@ -26,7 +26,7 @@ What works now:
 - A streamed offline sample with cancellation, checkpointed partial/stale output, and project/branch/revision ownership checks. Interrupted output is restored as a proposal, never automatically appended.
 - Retryable save errors, preservation of unreadable stored data, and a single-tab editing lock.
 - Bounded continuity review with cited conflicts, approval-only editable patches, undo, branch-local intentional exceptions, checkpoints, and prose-free trace exports.
-- Sixty-four Node regression tests, thirty reproducible evaluation cases, and forty-three automated browser acceptance scenarios, plus a CI workflow. See [verification](VERIFICATION.md) for exact results and environment limits.
+- Sixty-four Node regression tests, thirty reproducible evaluation cases, and forty-six automated browser acceptance scenarios, plus a CI workflow. See [verification](VERIFICATION.md) for exact results and environment limits.
 
 The local preview release gate is complete. Real model integration, visual steering, held-out quality evaluation, writer studies, and manual assistive-technology testing remain open before the intended AI product can be released.
 
@@ -170,6 +170,12 @@ Open **http://127.0.0.1:4173** in a current browser with IndexedDB and Web Locks
 - A second tab opens read-only while another tab owns the draft. Close the owner and reload the other tab to edit there.
 
 Export a project JSON backup before clearing browser data or replacing a project. Export preserves the entire branch/revision graph; a visible unapplied edit becomes an export-only revision without changing the editor. If an edit cannot fit within the history limits, Export project backs up the committed graph and explicitly asks you to use **Export edit text** for the pending words. The separate sample panel still needs **Export sample text**. Import and **New project** keep one previous-project recovery copy for immediate Undo/Redo; that copy is replaced by the next project replacement and cleared by a prose, branch, memory, or review mutation.
+
+### Smooth navigation and motion
+
+v0.6.1 adds native smooth section navigation with a sticky active-section bar, readable writing typography, and an adaptive bottom action bar. Wheel and touch scrolling remain native. Fixed controls are measured so section headings and focused controls can scroll clear of them, including narrow screens and enlarged text. The writing bar becomes more compact when using supporting tools.
+
+The circle moves using a short transform transition; pointer dragging remains immediate and its edge scrolling scales with elapsed frame time. Keyboard Home/End and Return cursor to end reveal the selected story position on long drafts. The OS **Reduce motion** preference disables animated travel and smooth scrolling. These are interaction improvements, not a measured frame-rate or universal device-performance guarantee.
 
 ### Write with the ⊕ story cursor
 

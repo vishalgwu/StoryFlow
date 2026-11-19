@@ -1,3 +1,15 @@
+# v0.6.1 — smoother navigation and writing controls
+
+- Native smooth section navigation, persistent section links, and an active-section indicator.
+- Dynamic spacing for the bottom writing bar/footer so focused controls and section headings remain clear; a compact bar while working in supporting panels.
+- Refined writing typography, title hierarchy, button feedback, panel borders, and scrollbars.
+- Cached word spans, fewer duplicate cursor layout operations, transform-based travel, and one cursor drag update per animation frame. Drag-edge scrolling scales with elapsed frame time.
+- Long-story keyboard cursor positions scroll into view. Reduced-motion preferences disable animated scrolling and cursor travel. Native wheel/touch scrolling is preserved.
+
+Validation: 64 Node tests, 30 evaluation cases, and 46 browser scenarios, including new checks for bidirectional navigation/wheel input, reduced motion, long-story cursor visibility, and narrow dock clearance. No schema, provider, or story-content changes are introduced. Smoothness varies by browser/hardware; no measured FPS claim is made.
+
+---
+
 # v0.6.0 — the story is the writing surface
 
 A dark, minimal, monospace canvas inspired by the supplied Story Steer Studio reference. Move the ⊕ cursor backward or forward through the words, return to the end, and write a whole story a passage at a time. Writing/generating at an earlier point creates an alternative and preserves the previous ending. New writing uses the existing checkpointed paragraph editor, rather than a separate unprotected draft field.

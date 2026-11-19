@@ -1,3 +1,16 @@
+# v0.6.1: navigation and motion polish
+
+The review found abrupt anchor jumps, disappearing navigation, fixed-control overlap risk, repeated word/layout work in cursor updates, and an active-section offset conflict. The fixes use native smooth anchor scrolling, sticky navigation, measured dock/footer clearances, cached word nodes, transform-based cursor travel, frame-based drag updates, and elapsed-time edge scrolling. Wheel/touch scrolling is not intercepted.
+
+- `npm run check`: 64 Node tests and the unchanged 30-case evaluation.
+- Browser suite: 46 scenarios, including three new polish scenarios plus all 43 previous cases.
+- New coverage checks section navigation in both directions, visible headings above fixed controls, active-section tracking, native wheel input both ways, reduced-motion CSS, keyboard Home/End over a 600-word story, and a 320px adaptive dock/footer without horizontal overflow.
+- Existing axe audits and doubled-text 320px checks remain part of the release gate. Manual local visual review covers scrolling between the writer and supporting panels.
+
+These checks establish behavior in tested Chrome/Chromium environments; they are not an FPS benchmark, a promise of perfect animation on every device, or a replacement for human accessibility testing. Story schema 4 and persistence contracts remain unchanged.
+
+---
+
 # v0.6.0: story canvas and movable cursor
 
 The reference site and its source were inspected before implementation. The new dark monospace writing surface provides a inline ⊕ cursor, muted future text, inline editing, and a writing-action dock. It retains StoryFlow's existing domain/storage modules. No reference model adapters or steering dials are claimed.

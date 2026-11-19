@@ -3,6 +3,7 @@ import { createExplorer } from './explorer.js';
 import { createMemoryUI } from './memoryui.js';
 import { createReviewUI } from './reviewui.js';
 import { createCanvas } from './canvas.js';
+import { createNavigation } from './navigation.js';
 import { openStorage, loadSession, saveSession } from './storage.js';
 import { snapshot } from './session.js';
 import { Generation, offlineContinuation } from './generation.js';
@@ -257,6 +258,7 @@ async function openEditor(hasLock) {
   canvas = createCanvas({ getEditor: () => editor, canWrite: () => writable && !working && !running,
     onMutation: () => { render(); changed(); }, onBeginWriting: () => beginEdit(editor.project.paragraphs.at(-1)), onError: showError });
   render();
+  createNavigation();
   if (!hasLock) {
     $('save-status').textContent = 'Read-only — another tab is editing';
     showError(new Error('Another StoryFlow tab owns this draft, or editing locks are unavailable. Close the editing tab and reload to edit here.'));
