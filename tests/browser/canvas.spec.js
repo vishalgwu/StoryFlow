@@ -23,6 +23,8 @@ test('word cursor moves both ways without editing and returns to the end', async
 });
 test('pointer drag selects an earlier word and retains the existing story', async ({ page }) => {
   await ready(page);
+  // Native scrolling and the cursor transition must settle before capturing pointer coordinates.
+  await cursor(page).scrollIntoViewIfNeeded(); await cursor(page).hover();
   const start = await cursor(page).boundingBox(), target = await page.locator('.story-word').nth(2).boundingBox();
   await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2); await page.mouse.down();
   await page.mouse.move(target.x + target.width - 1, target.y + target.height / 2, { steps: 8 }); await page.mouse.up();

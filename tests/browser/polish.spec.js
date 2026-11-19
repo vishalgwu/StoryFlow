@@ -32,6 +32,12 @@ test('reduced motion removes smooth scrolling and animated cursor travel', async
   await expect(page.locator('#story-cursor')).toHaveCSS('transition-duration', '0s');
   await page.getByRole('link', { name: 'Continuity', exact: true }).click();
   await unobscured(page, '#continuity h2');
+  await page.setViewportSize({ width: 1000, height: 300 });
+  await expect(page.locator('html')).toHaveClass(/flow-controls/);
+  await expect(page.locator('.studio-nav')).toHaveCSS('position', 'static');
+  await expect(page.locator('.writing-dock')).toHaveCSS('position', 'static');
+  await page.setViewportSize({ width: 1000, height: 800 });
+  await expect(page.locator('html')).not.toHaveClass(/flow-controls/);
 });
 test('long-story keyboard cursor stays visible and narrow dock adapts to its content', async ({ page }) => {
   await ready(page);

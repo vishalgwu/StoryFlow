@@ -264,3 +264,5 @@ The server is for local development and serves only application assets. It is no
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
+When enlarged text or a short window makes fixed bars consume too much of the viewport, navigation and writing controls move into normal document flow so they cannot trap or cover the content. This fallback is recalculated on resize.

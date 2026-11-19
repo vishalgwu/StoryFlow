@@ -43,3 +43,5 @@ No new project schema is introduced: schema 4 remains current, and schemas 1–3
 ## Remaining product work
 
 Live provider adapters, visual steering/attention anchors, learned retrieval, held-out quality evaluation, writer studies, and manual assistive-technology testing remain open. This preview makes no general continuity-accuracy, writing-quality, model-adherence, WCAG-conformance, or production-hosting claim.
+
+When enlarged text or a short window makes fixed bars consume too much of the viewport, navigation and writing controls move into normal document flow so they cannot trap or cover the content. This fallback is recalculated on resize.

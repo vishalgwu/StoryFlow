@@ -255,3 +255,5 @@ To use installed Chrome instead, set `STORYFLOW_BROWSER_CHANNEL=chrome` (PowerSh
 Local automated browser evidence covers Chrome on Windows. Broader Firefox/Safari coverage, a formal accessibility audit, real-device/GPU testing, live providers, deployed-site testing, and user studies are not claimed. The workflow configuration is separate from local test evidence; consult GitHub Actions for its remote result.
 
 Recovery checkpoints are periodic. A crash or eviction can lose the latest uncheckpointed input, and browser storage is not a backup. A second tab must reload to take ownership. Up to 50 prior edits are retained within an 8 MB history budget; exports contain the draft only, including a visible unapplied edit. Export the sample panel separately. Immutable version history and full branch-switch browser tests begin in Phase 2; current ownership tests already reject a changed branch ID.
+
+When enlarged text or a short window makes fixed bars consume too much of the viewport, navigation and writing controls move into normal document flow so they cannot trap or cover the content. This fallback is recalculated on resize.

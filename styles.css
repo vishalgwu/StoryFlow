@@ -46,3 +46,4 @@ button{transition:background-color 140ms ease,border-color 140ms ease,color 140m
 @media(forced-colors:active){.studio-nav,.writing-dock nav{background:Canvas;border-color:ButtonText}.studio-nav a[aria-current=location]{color:LinkText}.studio-nav a[aria-current=location]::after{background:Highlight}}
 .story-word{scroll-margin-block:calc(var(--nav-height,52px) + 30px) calc(var(--dock-clearance,180px) + 40px)}
 #draft,#history,#memory,#continuity,#help{scroll-margin-top:8px}
+html.flow-controls .studio-nav{position:static}html.flow-controls .writing-dock{position:static;width:100%;padding:16px 0}html.flow-controls .workspace footer{position:static;width:100%}html.flow-controls .paper{padding-bottom:35px}html.flow-controls body{padding-bottom:24px}

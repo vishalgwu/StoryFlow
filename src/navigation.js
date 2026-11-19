@@ -5,13 +5,18 @@ export function createNavigation() {
   const links = [...nav.querySelectorAll('a')], sections = links.map(link => document.querySelector(link.hash));
   let frame = 0;
   function measure() {
-    root.style.setProperty('--nav-height', `${nav.getBoundingClientRect().height}px`);
-    root.style.setProperty('--footer-height', `${footer.getBoundingClientRect().height}px`);
-    root.style.setProperty('--dock-clearance', `${dock.getBoundingClientRect().height + footer.getBoundingClientRect().height + 24}px`);
+    const navHeight = nav.getBoundingClientRect().height, footerHeight = footer.getBoundingClientRect().height, dockHeight = dock.getBoundingClientRect().height;
+    // Enlarged text or a short viewport must not leave a sliver between two fixed bars.
+    const occupied = navHeight + footerHeight + dockHeight;
+    const flow = occupied > innerHeight * (root.classList.contains('flow-controls') ? .35 : .48);
+    root.classList.toggle('flow-controls', flow);
+    root.style.setProperty('--nav-height', `${flow ? 0 : navHeight}px`);
+    root.style.setProperty('--footer-height', `${flow ? 0 : footerHeight}px`);
+    root.style.setProperty('--dock-clearance', `${flow ? 24 : dockHeight + footerHeight + 24}px`);
   }
   function update() {
     frame = 0;
-    const line = nav.getBoundingClientRect().bottom + 48;
+    const line = Math.max(0, nav.getBoundingClientRect().bottom) + 48;
     let active = sections[0];
     for (const section of sections) if (section.getBoundingClientRect().top <= line) active = section;
     links.forEach(link => { if (link.hash === `#${active.id}`) link.setAttribute('aria-current', 'location'); else link.removeAttribute('aria-current'); });
@@ -22,6 +27,6 @@ export function createNavigation() {
   addEventListener('scroll', schedule, { passive: true });
   const observer = new ResizeObserver(() => { measure(); schedule(); });
   [nav, dock, footer].forEach(element => observer.observe(element));
-  addEventListener('resize', schedule, { passive: true });
+  addEventListener('resize', () => { measure(); schedule(); }, { passive: true });
   measure(); update();
 }
