@@ -6,13 +6,13 @@ The writer retains final authority over the prose and the facts of the story.
 
 ## Current status
 
-**Phase 4 complete for the bounded local continuity workflow.** Reviews freeze a revision and eligible approved facts, cite both passages, explain uncertainty, and propose an editable repair requiring explicit writer approval. Cancellation, resource budgets, partial findings, intentional exceptions, stale-patch rejection, and reload recovery preserve writer control. See [verification](VERIFICATION.md).
+**Phase 5 complete for the evaluated local preview (v0.5.0).** The full local journey is tested from editing and branching through approved memory, offline continuation, cited continuity repair, reload, and export/import. Section navigation, keyboard focus, enlarged-text reflow, automated accessibility audits, in-app help, and reproducible evaluation are included. See [release notes](RELEASE_NOTES.md), [verification](VERIFICATION.md), [evaluation results](docs/evaluation.md), and [accessibility evidence](docs/accessibility.md).
 
 The reviewer supports explicit definite-object possession conflicts and matching can/cannot statements. It abstains on unsupported syntax, dialogue, uncertainty, temporal cues, and intervening recovery. Memory and review use conservative local rules. No model calls, learned embeddings, or measured general continuity accuracy are claimed. Real providers and steering controls remain planned.
 
 ### Progress checkpoint
 
-**Phases 0–4 are complete for their documented local scopes. Next is Phase 5: evaluation, accessibility, and release polish.** There is no measured whole-project completion percentage. Live AI, learned retrieval, and visual steering still need implementation and evaluation.
+**Phases 0–5 are complete for their documented local-preview scopes.** There is no measured whole-project completion percentage. Live AI, learned retrieval, and visual steering still need implementation and evaluation.
 
 What works now:
 
@@ -26,9 +26,9 @@ What works now:
 - A streamed offline sample with cancellation, checkpointed partial/stale output, and project/branch/revision ownership checks. Interrupted output is restored as a proposal, never automatically appended.
 - Retryable save errors, preservation of unreadable stored data, and a single-tab editing lock.
 - Bounded continuity review with cited conflicts, approval-only editable patches, undo, branch-local intentional exceptions, checkpoints, and prose-free trace exports.
-- Fifty-nine Node regression tests and thirty-four automated browser acceptance scenarios, plus a CI workflow. See [verification](VERIFICATION.md) for exact results and environment limits.
+- Fifty-nine Node regression tests, thirty reproducible evaluation cases, and thirty-eight automated browser acceptance scenarios, plus a CI workflow. See [verification](VERIFICATION.md) for exact results and environment limits.
 
-Next, evaluate the complete workflow and improve accessibility and release readiness. Real model integration and visual steering still need implementation before the intended AI-writing workflow can be demonstrated end to end.
+The local preview release gate is complete. Real model integration, visual steering, held-out quality evaluation, writer studies, and manual assistive-technology testing remain open before the intended AI product can be released.
 
 The blueprint uses **Story Steer Studio** as the product name; **StoryFlow** is the repository name. Its references to an earlier prototype and historical test results are design context, not implemented features or verification results for this repository.
 
@@ -99,7 +99,7 @@ The implementation uses browser-native JavaScript modules, HTML/CSS, IndexedDB, 
 | 2 | Immutable revisions and visual branches | Complete for the local branch workflow | Fork, compare, restore, migration, and export preserve independent histories; browser switching cannot accept stale completions |
 | 3 | Approved, passage-linked story memory | Complete for the local baseline | Approval/evidence links, distant retrieval, branch/time/knowledge filtering, stale revalidation, context budgets, and persistence are tested |
 | 4 | Bounded continuity review | Complete for the conservative local baseline | Findings cite evidence and patches require approval and valid preconditions |
-| 5 | Evaluation, accessibility, and release polish | Not started | The main writing journey works end to end and claims match measured results |
+| 5 | Evaluation, accessibility, and release polish | Complete for the local preview | Local journey, reproducible evaluation, axe audits, keyboard/reflow, recovery and release documentation pass; broader product research remains open |
 
 Phase 6 in the blueprint is optional, evidence-driven expansion (for example, cross-device sync or collaboration), beyond the initial product described above. It has not started.
 
@@ -107,7 +107,7 @@ Generation currently uses a deterministic offline fixture. Node and browser test
 
 ## Validation and evaluation plan
 
-Future checks should cover import validation, branch isolation, revision ownership, cancellation, stale patches, persistence failures, and recoverable partial streams. Controlled provider fixtures should make regression tests reproducible without paid inference.
+Current checks cover import validation, branch isolation, revision ownership, cancellation, stale patches, persistence failures, recoverable partial streams, and the complete local writing journey. `npm run evaluate` reproduces 20 continuity and 10 memory fixtures and fails on an unreviewed baseline change. On this small synthetic continuity set: 6 true positives, 0 false positives, 4 false negatives, 10 true negatives (100% precision, 60% recall). All 6 emitted findings have exact citations; 10/10 memory inclusion cases match expectations. These are development fixtures, not general quality estimates.
 
 Product evaluation should compare visual steering with a prompt-box baseline under comparable model and context budgets. Memory retrieval and continuity review should be measured separately, including false positives, wrong-branch leakage, and abstention. Benefits remain hypotheses until evaluated; historical prototype checks do not count as current results.
 
@@ -131,6 +131,10 @@ StoryFlow/
 |-- tests/                           Domain, HTTP, and browser regression checks
 |-- playwright.config.js             Isolated browser regression configuration
 |-- .github/workflows/checks.yml      Checks on main pushes and pull requests
+|-- evaluation/                     Labelled synthetic cases, runner, and baseline report
+|-- RELEASE_NOTES.md                 Local preview release scope and upgrade guidance
+|-- docs/evaluation.md               Measured results and unperformed product research
+|-- docs/accessibility.md            Automated evidence and manual follow-up
 |-- docs/architecture.md             Initial stack decision and limitations
 |-- VERIFICATION.md                  Executed checks and manual acceptance paths
 |-- Story-Steer-Project-Handoff.pdf   Detailed implementation blueprint
@@ -151,6 +155,8 @@ Use Node.js 22 or newer. No dependency installation is needed.
 ```sh
 npm start
 ```
+
+Use **Write**, **Branches**, **Memory**, **Continuity**, and **Help** to navigate the panels. A keyboard skip link reaches the editor. Help includes the writing journey, shortcuts, privacy, and recovery guidance.
 
 Open **http://127.0.0.1:4173** in a current browser with IndexedDB and Web Locks support. Use the server instead of opening `index.html` directly.
 
@@ -202,6 +208,8 @@ Edited replacement/reason form drafts are session-only until a decision is saved
 
 ```sh
 npm run check
+# Reproduce the evaluation separately:
+npm run evaluate
 # Or run only the regression suite:
 npm test
 ```

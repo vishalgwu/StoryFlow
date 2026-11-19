@@ -9,9 +9,12 @@
   <script type="module" src="/src/app.js"></script>
 </head>
 <body>
+  <a class="skip-link" href="#draft">Skip to story editor</a>
   <header><a class="brand" href="/">StoryFlow<span>WRITING STUDIO</span></a><span class="badge">LOCAL DRAFT · EARLY PREVIEW</span></header>
+  <nav class="studio-nav" aria-label="Studio sections"><a href="#draft">Write</a><a href="#history">Branches</a><a href="#memory">Memory</a><a href="#continuity">Continuity</a><a href="#help">Help</a></nav>
   <main>
-    <section class="workspace" aria-label="Story editor">
+    <h1 class="visually-hidden">StoryFlow writing studio</h1>
+    <section id="draft" tabindex="-1" class="workspace" aria-label="Story editor">
       <div class="toolbar"><span id="save-status" role="status">Opening draft…</span><div><button id="undo" disabled>Undo</button><button id="redo" disabled>Redo</button><button id="save" disabled>Save draft</button><button id="retry" hidden>Retry saving</button></div></div>
       <p id="edit-status" class="edit-status" role="status" hidden></p>
       <button id="export-edit" class="edit-backup" hidden>Export edit text</button>
@@ -26,7 +29,7 @@
       <footer><span id="words">0 words</span><span>Your words stay in this browser.</span></footer>
     </section>
     <aside>
-      <p class="eyebrow">THE NEXT POSSIBILITY</p><h1>A little momentum.</h1>
+      <p class="eyebrow">THE NEXT POSSIBILITY</p><h2 class="momentum-heading">A little momentum.</h2>
       <p>Try a sample continuation, then make it your own. Your current draft stays editable while it runs.</p>
       <div class="notice"><strong>Offline template demo</strong><p>This deterministic sample reuses an approved memory claim when available; otherwise it returns the fixed lighthouse example. No AI model or network service is called.</p></div>
       <button id="generate" class="primary" disabled>Try sample continuation</button><button id="stop" disabled>Stop</button>
@@ -37,36 +40,43 @@
       <button id="new-project" disabled>New project</button>
       <p class="hint">Project exports preserve branches and immutable history. Import replaces the project; export a backup first. Finish or cancel an edit before changing branches.</p>
     </aside>
-    <section class="history-panel" aria-label="Branches and history">
+    <section id="history" tabindex="-1" class="history-panel" aria-label="Branches and history">
       <div class="history-heading"><p class="eyebrow">EXPLORE THE POSSIBILITIES</p><h2>Every path has a history.</h2><p class="hint">Fork an alternative. Keep the original. Restore without erasing later work.</p></div>
       <div class="history-grid">
         <section aria-label="Branch explorer"><h3>Your branches</h3><label for="branch-name">Branch name</label><input id="branch-name" maxlength="80" placeholder="A different ending"><div class="history-actions"><button id="fork" disabled>Fork current draft</button><button id="rename-branch" disabled>Rename active branch</button></div><ol id="branch-tree" class="branch-tree"></ol></section>
-        <section aria-label="Revision explorer"><h3>Revision history</h3><label for="revision-select">Inspect a revision</label><select id="revision-select"></select><p id="revision-info" class="hint"></p><pre id="revision-preview"></pre><div class="history-actions"><button id="fork-revision" disabled>Fork selected revision</button><button id="restore-revision" disabled>Restore selected revision</button></div><p class="hint">Restore creates a new revision. All later writing remains in history. Undo and redo also create recovery revisions.</p></section>
+        <section aria-label="Revision explorer"><h3>Revision history</h3><label for="revision-select">Inspect a revision</label><select id="revision-select"></select><p id="revision-info" class="hint"></p><pre id="revision-preview" tabindex="0" role="region" aria-label="Revision prose"></pre><div class="history-actions"><button id="fork-revision" disabled>Fork selected revision</button><button id="restore-revision" disabled>Restore selected revision</button></div><p class="hint">Restore creates a new revision. All later writing remains in history. Undo and redo also create recovery revisions.</p></section>
       </div>
-      <section class="comparison" aria-label="Compare revisions"><h3>Compare two revisions</h3><div class="comparison-controls"><label>From<select id="compare-left"></select></label><label>To<select id="compare-right"></select></label><button id="compare">Compare revisions</button></div><div id="comparison-result" aria-live="polite"></div></section>
+      <section class="comparison" aria-label="Compare revisions"><h3>Compare two revisions</h3><div class="comparison-controls"><label>From<select id="compare-left"></select></label><label>To<select id="compare-right"></select></label><button id="compare">Compare revisions</button></div><div id="comparison-result" tabindex="0" role="region" aria-label="Revision comparison results" aria-live="polite"></div></section>
     </section>
-    <section class="memory-panel" aria-label="Story memory">
+    <section id="memory" tabindex="-1" class="memory-panel" aria-label="Story memory">
       <p class="eyebrow">KNOW WHAT YOUR STORY KNOWS</p><h2>Memory with a source.</h2>
       <p class="hint">Suggestions stay pending until you approve them. Plans and inferences remain separate from established facts. Decisions apply to this branch and its future forks. Memory fields save when you choose Save proposal changes or Approve memory; unsaved form fields are not included in project backups.</p>
       <div class="memory-grid">
         <section aria-label="Propose memory"><h3>Start with the evidence</h3><label for="memory-passage">Evidence passage</label><select id="memory-passage"></select><textarea id="memory-source" aria-label="Saved evidence passage" readonly rows="5"></textarea><div class="history-actions"><button id="memory-extract" disabled>Suggest facts from draft</button><button id="memory-propose" disabled>Propose selected evidence</button></div><p class="hint">Extraction uses local sentence and keyword rules, not an AI model. Select text above for a precise quote, or propose the whole passage (up to 2,000 characters).</p></section>
         <section aria-label="Memory retrieval"><h3>Prepare the next continuation</h3><label for="memory-query">Relevant entities or topic</label><input id="memory-query" maxlength="500" placeholder="Elara, key, sunrise"><label for="memory-time">Narrative time step</label><input id="memory-time" type="number" min="0" max="1000000" value="0"><label for="memory-viewpoint">Character viewpoint (blank means reader)</label><input id="memory-viewpoint" maxlength="80" placeholder="Reader"><label for="memory-budget">Context budget (estimated input tokens)</label><input id="memory-budget" type="number" min="256" max="16000" value="4096"><button id="memory-prepare">Prepare context</button><p class="hint">Time steps are writer-assigned, inclusive ranges. Retrieval uses entities, keywords, and a small local synonym lexicon. Token counts use UTF-8 bytes as a conservative estimate, not provider usage.</p></section>
       </div>
-      <p id="memory-status" role="status"></p>
+      <p id="memory-status" role="status" tabindex="-1"></p>
       <label for="memory-filter">Show memory</label><select id="memory-filter"><option value="all">All on this branch</option><option value="pending">Pending approval</option><option value="accepted">Accepted</option><option value="stale">Stale evidence</option><option value="dismissed">Dismissed</option></select>
       <p id="memory-count" class="hint"></p><div id="memory-cards"></div><div class="history-actions"><button id="memory-prev">Previous memory page</button><button id="memory-next">Next memory page</button></div>
       <section id="memory-evidence" aria-label="Memory evidence" tabindex="-1" hidden><h3>Original supporting passage</h3><p id="memory-evidence-info" class="hint"></p><p id="memory-evidence-text"></p></section>
-      <section id="memory-context" aria-label="Prepared context" hidden><h3>Why this context?</h3><p id="memory-context-status" role="status"></p><ul id="memory-included"></ul><details><summary>Excluded memory and reasons</summary><ul id="memory-omitted"></ul></details><details><summary>Inspect exact context</summary><pre id="memory-context-text"></pre></details></section>
+      <section id="memory-context" aria-label="Prepared context" hidden><h3>Why this context?</h3><p id="memory-context-status" role="status"></p><ul id="memory-included"></ul><details><summary>Excluded memory and reasons</summary><ul id="memory-omitted"></ul></details><details><summary>Inspect exact context</summary><pre id="memory-context-text" tabindex="0" role="region" aria-label="Exact prepared context"></pre></details></section>
     </section>
-    <section class="review-panel" aria-label="Continuity review">
+    <section id="continuity" tabindex="-1" class="review-panel" aria-label="Continuity review">
       <p class="eyebrow">A SECOND LOOK, WITH EVIDENCE</p><h2>Keep the story connected.</h2>
       <p class="hint">Local rules check explicit possession and direct can/cannot contradictions against approved memory. Uncertain narration and possible state changes lead to abstention. This is not a general AI reviewer, and no prose changes before you choose Apply patch.</p>
       <div class="review-grid"><section aria-label="Review scope"><h3>Choose a snapshot</h3><label for="review-revision">Review revision</label><select id="review-revision"></select><button id="review-current">Use current draft</button><label for="review-from">Review from passage</label><input id="review-from" type="number" min="1" value="1"><label for="review-to">Review through passage</label><input id="review-to" type="number" min="1" value="1"><label for="review-time">Review narrative time</label><input id="review-time" type="number" min="0" max="1000000" value="0"><label for="review-viewpoint">Review character viewpoint (blank means reader)</label><input id="review-viewpoint" maxlength="80"><p class="hint">A passage range stands in for a chapter in this editor. Historical snapshots are inspectable; applying a patch requires the current branch and exact reviewed head.</p></section>
       <section aria-label="Review budgets"><h3>Bound the work</h3><label for="review-calls">Maximum tool calls</label><input id="review-calls" type="number" min="1" max="500" value="80"><label for="review-tokens">Review input budget (estimated tokens)</label><input id="review-tokens" type="number" min="256" max="1000000" value="24000"><label for="review-ms">Review time limit (ms)</label><input id="review-ms" type="number" min="50" max="15000" value="5000"><label for="review-findings-limit">Maximum findings</label><input id="review-findings-limit" type="number" min="1" max="20" value="20"><p class="hint">Local operations only; cost $0. Token estimates count UTF-8 bytes read by scoped tools, not model billing. Partial findings survive cancellation, failure, and budget exits.</p><div class="history-actions"><button id="review-start" disabled>Start continuity review</button><button id="review-cancel" disabled>Cancel review</button></div></section></div>
-      <p id="review-active-status" role="status"></p><label for="review-run">Reviews on this branch</label><select id="review-run"></select><p id="review-status" role="status"></p><button id="review-trace" disabled>Export review trace</button><details><summary>Tool trace and abstentions</summary><pre id="review-diagnostics"></pre></details>
+      <p id="review-active-status" role="status"></p><label for="review-run">Reviews on this branch</label><select id="review-run"></select><p id="review-status" role="status" tabindex="-1"></p><button id="review-trace" disabled>Export review trace</button><details><summary>Tool trace and abstentions</summary><pre id="review-diagnostics" tabindex="0" role="region" aria-label="Review diagnostic trace"></pre></details>
       <div id="review-findings"></div><section id="review-evidence" aria-label="Review evidence" tabindex="-1" hidden><h3>Both supporting passages</h3><div id="review-evidence-content"></div></section>
       <section aria-label="Intentional exceptions"><h3>Intentional exceptions on this branch</h3><div id="review-exceptions"></div></section>
       <p class="hint">Apply patch is your approval. You can edit the replacement first; unsaved replacement fields are session-only. Applying a repair creates an undoable revision and makes other proposals from the old head stale. Run a fresh review for further repairs. Dismiss affects this run; Mark intentional suppresses that exact fact/passage conflict until reconsidered.</p>
+    </section>
+    <section id="help" tabindex="-1" class="help-panel" aria-label="Studio help">
+      <h2>A safe path through the studio</h2>
+      <ol><li>Write a passage. Choose Edit passage, then Save changes or Cancel edit.</li><li>Fork a named branch to explore an alternative while preserving the original.</li><li>Propose saved evidence in Memory. Inspect and approve each fact before reuse.</li><li>Run Continuity review. Inspect both passages and approve an edited repair, dismiss it, or record an intentional exception.</li><li>Export project for an independent backup. Import restores its branches, memory, and review history.</li></ol>
+      <details><summary>Keyboard and accessibility</summary><p>Use Tab and Shift+Tab to move through controls, Enter or Space to activate buttons, and arrow keys in selects. The section links skip long panels. In an edited passage, Ctrl/Cmd+Enter saves and Escape cancels. Ctrl/Cmd+S saves the draft. Outside text fields, Ctrl/Cmd+Z undoes and Ctrl/Cmd+Shift+Z redoes.</p></details>
+      <details><summary>Recovery and privacy</summary><p>Wait for the saved indicator before closing. Browser storage can be cleared or evicted; export a project backup regularly. A second tab is read-only. If saving fails, use Retry saving or export before closing. Unapplied passage edits recover after reload; unsaved memory and repair form fields do not. Interrupted reviews never resume automatically. This local preview sends no story text to an AI service.</p></details>
+      <p class="hint">Local preview v0.5.0. Continuity rules support only explicit possession and matching can/cannot statements. No findings does not prove consistency. Live AI, visual steering, and cross-device sync are not available.</p>
     </section>
   </main>
   <p id="error" class="error" role="alert" hidden></p>

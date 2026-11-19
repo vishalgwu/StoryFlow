@@ -1,0 +1,36 @@
+{
+  "continuity": [
+    {"id":"lost-key", "source":"Elara lost the key.", "target":"Elara carries the key.", "conflict":true},
+    {"id":"dropped-ring", "source":"Rowan dropped the ring.", "target":"Rowan has the ring.", "conflict":true},
+    {"id":"negative-possession", "source":"Mara does not have the map.", "target":"Mara holds the map.", "conflict":true},
+    {"id":"positive-possession", "source":"Mara owns the map.", "target":"Mara does not have the map.", "conflict":true},
+    {"id":"cannot-hear", "source":"Elara cannot hear the forest after sunrise.", "target":"Elara can hear the forest after sunrise.", "conflict":true},
+    {"id":"can-open", "source":"Rowan can open the gate.", "target":"Rowan cannot open the gate.", "conflict":true},
+    {"id":"same-state", "source":"Elara lost the key.", "target":"Elara does not have the key.", "conflict":false},
+    {"id":"other-person", "source":"Elara lost the key.", "target":"Rowan carries the key.", "conflict":false},
+    {"id":"other-object", "source":"Elara lost the key.", "target":"Elara carries the map.", "conflict":false},
+    {"id":"other-condition", "source":"Elara cannot hear the forest after sunrise.", "target":"Elara can hear the forest before sunrise.", "conflict":false},
+    {"id":"explicit-recovery", "source":"Elara lost the key.", "between":["Elara recovered the key."], "target":"Elara carries the key.", "conflict":false},
+    {"id":"dialogue", "source":"Elara lost the key.", "target":"\"Elara carries the key.\"", "conflict":false},
+    {"id":"uncertain", "source":"Elara lost the key.", "target":"Perhaps Elara carries the key.", "conflict":false},
+    {"id":"time-shift", "source":"Elara lost the key.", "target":"Yesterday Elara carried the key.", "conflict":false},
+    {"id":"explicit-loss", "source":"Elara has the key.", "target":"Elara lost the key.", "conflict":false},
+    {"id":"unrelated", "source":"Elara lost the key.", "target":"The rain softened the road.", "conflict":false},
+    {"id":"pronoun-gap", "source":"Elara lost the key.", "target":"She carries the key.", "conflict":true},
+    {"id":"paraphrase-gap", "source":"Elara lost the key.", "target":"The key remains in Elara's pocket.", "conflict":true},
+    {"id":"world-rule-gap", "source":"Dragons never breathe underwater.", "target":"The dragon breathed underwater.", "conflict":true},
+    {"id":"alias-gap", "source":"Elara lost the key.", "target":"Captain Elara carries the key.", "conflict":true}
+  ],
+  "memory": [
+    {"id":"distant-entity", "query":"Elara", "distance":30, "expected":true},
+    {"id":"object-keyword", "query":"key", "expected":true},
+    {"id":"pending-exclusion", "query":"Elara", "status":"pending", "expected":false},
+    {"id":"dismissed-exclusion", "query":"Elara", "status":"dismissed", "expected":false},
+    {"id":"stale-exclusion", "query":"Elara", "stale":true, "expected":false},
+    {"id":"before-validity", "query":"Elara", "time":1, "expected":false},
+    {"id":"valid-endpoint", "query":"Elara", "time":4, "expected":true},
+    {"id":"unknown-character", "query":"Elara", "viewpoint":"Rowan", "expected":false},
+    {"id":"known-character", "query":"Elara", "viewpoint":"Elara", "expected":true},
+    {"id":"sibling-exclusion", "query":"Elara", "sibling":true, "expected":false}
+  ]
+}

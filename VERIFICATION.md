@@ -1,3 +1,28 @@
+# Phase 5: evaluated local preview — verification
+
+## Release gate and scope
+
+v0.5.0 completes the local-preview Phase 5 gate. This is not the complete live AI/visual-steering product. See [release notes](RELEASE_NOTES.md), [evaluation](docs/evaluation.md), and [accessibility](docs/accessibility.md) for methods, results, and explicit limits.
+
+## Executed checks
+
+- `npm run check`: syntax checks, **59 Node tests**, and the **30-case evaluation** pass.
+- `npm run test:browser` with Chrome on Windows: **38 scenarios** including all 34 prior regressions and four release scenarios.
+- Axe-core audits initial editor, expanded memory fields, continuity findings/evidence, and enlarged text at 320px with zero detected violations under the selected WCAG A/AA and best-practice rules. This is automated evidence, not conformance certification.
+- Keyboard checks cover skip navigation, save/cancel, and focus after dynamic approval/dismissal. Narrow reflow checks enforce no horizontal document overflow and usable Apply/Undo.
+- One complete scenario covers edit → fork → approved memory → captured context → offline continuation → cited review → edited repair → reload → portable export/import → unchanged original branch. It asserts no browser runtime errors or external requests during that journey.
+- `git diff --check` before commit. CI independently runs Node/evaluation and Chromium browser checks, retaining audit JSON/screenshots for seven days.
+
+The initial narrow audit exposed enlarged heading overflow and an unfocusable scrolling revision preview; heading wrapping and named focusable scrolling regions fix them. Initial test setup errors (textarea text-content assertions and CSP-blocked inline test styling) were corrected to value assertions and a test stylesheet response without weakening application CSP.
+
+## Measured baseline and limits
+
+Twenty synthetic continuity cases yield 6 true positives, 0 false positives, 4 false negatives, and 10 true negatives: 100% precision and 60% recall on this development set. Six emitted findings have valid exact citations; 14 cases produce no finding. All 10 memory inclusion cases match their labels. Cost is zero. These cases do not establish general accuracy, semantic ranking performance, model adherence, writing-quality gains, or human usability. Four unsupported-language misses remain visible in the baseline.
+
+Manual screen-reader, browser zoom/OS assistive-technology checks, held-out fiction evaluation, and writer studies remain unperformed. Live model integration and visual steering remain unfinished product work. No new storage schema is introduced; existing schema 4 and legacy migrations remain covered by regressions.
+
+---
+
 # Phase 4: bounded local continuity review — verification
 
 ## Release gate and scope

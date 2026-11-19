@@ -7,7 +7,7 @@ export default defineConfig({
   timeout: 30_000,
   forbidOnly: !!process.env.CI,
   retries: 0,
-  reporter: 'list',
+  reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: 'http://127.0.0.1:4173',
     channel: process.env.STORYFLOW_BROWSER_CHANNEL || undefined,

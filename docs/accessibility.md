@@ -1,0 +1,13 @@
+# Accessibility evidence and remaining checks
+
+The local preview includes a skip link, named section navigation and landmarks, one page heading, labelled controls, visible keyboard focus, polite status messages, error alerts, and keyboard access to scrolling prose/context/trace panels. Dynamic memory and continuity decisions move focus to their status when the activated control is replaced. Branch-tree actions return focus to the active branch selector when their button is replaced. Passage save/cancel returns focus to its Edit passage button.
+
+`tests/browser/release.spec.js` runs axe-core through Playwright against the initial editor, expanded memory form, continuity findings/evidence, and a 320px layout with CSS font sizes doubled. It checks WCAG 2 A/AA, 2.1 A/AA, available 2.2 AA rules, and best-practice rules without exclusions. Passing means zero violations detected in those states, not complete standards conformance. The narrow test also asserts no horizontal document overflow and applies/undoes a repair. It doubles explicit CSS pixel font sizes through a test stylesheet response; it is not an OS magnifier or browser-zoom certification.
+
+The keyboard scenario activates the skip link, enters a passage, saves with Ctrl/Cmd+Enter, cancels with Escape, and checks focus after memory approval and continuity dismissal. Existing editor checks cover shortcuts and a narrow layout. Buttons have a minimum 44px height, long headings wrap at narrow widths, and forced-colors focus has an explicit outline. Native controls use browser behavior. No custom animation is introduced.
+
+Each audited state attaches its full axe JSON result. Desktop/narrow continuity screenshots are also attached. The HTML Playwright report retains these attachments. GitHub Actions retains browser evidence for seven days on successful and failed runs. Local artifacts are under ignored `playwright-report/` and `test-results/`; use `npx playwright show-report` to inspect the HTML report.
+
+## Manual release follow-up
+
+These checks have **not** been performed with a human screen-reader user or across all browser/assistive technology combinations. Before a broader product release, verify NVDA with Chrome/Firefox and VoiceOver with Safari; status announcement frequency during streamed output/review; reading order and keyboard discovery with realistic long projects; browser zoom to 200% and 400%; OS high contrast; and speech input. Perform a writer usability study and document any barriers. Automated checks and fixture coverage do not substitute for these checks. Current verified runtime targets are Chrome on Windows and Chromium in Linux CI.

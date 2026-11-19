@@ -1,0 +1,284 @@
+{
+  "benchmark": "StoryFlow synthetic local baseline v1",
+  "limitations": "Author-labelled development fixtures, not held-out stories or a user study. No live model, steering comparison, general accuracy, or latency claim. Abstention includes safe negatives and unsupported conflicts.",
+  "continuity": {
+    "cases": 20,
+    "truePositives": 6,
+    "falsePositives": 0,
+    "falseNegatives": 4,
+    "trueNegatives": 10,
+    "precision": 1,
+    "recall": 0.6,
+    "abstentionRate": 0.7,
+    "citationValidity": true,
+    "actualCost": 0,
+    "results": [
+      {
+        "id": "lost-key",
+        "expectedConflict": true,
+        "detected": true,
+        "citationsValid": true,
+        "abstained": false,
+        "toolCalls": 4,
+        "estimatedInputTokens": 149,
+        "actualCost": 0
+      },
+      {
+        "id": "dropped-ring",
+        "expectedConflict": true,
+        "detected": true,
+        "citationsValid": true,
+        "abstained": false,
+        "toolCalls": 4,
+        "estimatedInputTokens": 159,
+        "actualCost": 0
+      },
+      {
+        "id": "negative-possession",
+        "expectedConflict": true,
+        "detected": true,
+        "citationsValid": true,
+        "abstained": false,
+        "toolCalls": 4,
+        "estimatedInputTokens": 173,
+        "actualCost": 0
+      },
+      {
+        "id": "positive-possession",
+        "expectedConflict": true,
+        "detected": true,
+        "citationsValid": true,
+        "abstained": false,
+        "toolCalls": 4,
+        "estimatedInputTokens": 143,
+        "actualCost": 0
+      },
+      {
+        "id": "cannot-hear",
+        "expectedConflict": true,
+        "detected": true,
+        "citationsValid": true,
+        "abstained": false,
+        "toolCalls": 4,
+        "estimatedInputTokens": 295,
+        "actualCost": 0
+      },
+      {
+        "id": "can-open",
+        "expectedConflict": true,
+        "detected": true,
+        "citationsValid": true,
+        "abstained": false,
+        "toolCalls": 4,
+        "estimatedInputTokens": 174,
+        "actualCost": 0
+      },
+      {
+        "id": "same-state",
+        "expectedConflict": false,
+        "detected": false,
+        "citationsValid": true,
+        "abstained": true,
+        "toolCalls": 2,
+        "estimatedInputTokens": 85,
+        "actualCost": 0
+      },
+      {
+        "id": "other-person",
+        "expectedConflict": false,
+        "detected": false,
+        "citationsValid": true,
+        "abstained": true,
+        "toolCalls": 2,
+        "estimatedInputTokens": 79,
+        "actualCost": 0
+      },
+      {
+        "id": "other-object",
+        "expectedConflict": false,
+        "detected": false,
+        "citationsValid": true,
+        "abstained": true,
+        "toolCalls": 2,
+        "estimatedInputTokens": 79,
+        "actualCost": 0
+      },
+      {
+        "id": "other-condition",
+        "expectedConflict": false,
+        "detected": false,
+        "citationsValid": true,
+        "abstained": true,
+        "toolCalls": 2,
+        "estimatedInputTokens": 170,
+        "actualCost": 0
+      },
+      {
+        "id": "explicit-recovery",
+        "expectedConflict": false,
+        "detected": false,
+        "citationsValid": true,
+        "abstained": true,
+        "toolCalls": 3,
+        "estimatedInputTokens": 168,
+        "actualCost": 0
+      },
+      {
+        "id": "dialogue",
+        "expectedConflict": false,
+        "detected": false,
+        "citationsValid": true,
+        "abstained": true,
+        "toolCalls": 2,
+        "estimatedInputTokens": 81,
+        "actualCost": 0
+      },
+      {
+        "id": "uncertain",
+        "expectedConflict": false,
+        "detected": false,
+        "citationsValid": true,
+        "abstained": true,
+        "toolCalls": 2,
+        "estimatedInputTokens": 87,
+        "actualCost": 0
+      },
+      {
+        "id": "time-shift",
+        "expectedConflict": false,
+        "detected": false,
+        "citationsValid": true,
+        "abstained": true,
+        "toolCalls": 2,
+        "estimatedInputTokens": 89,
+        "actualCost": 0
+      },
+      {
+        "id": "explicit-loss",
+        "expectedConflict": false,
+        "detected": false,
+        "citationsValid": true,
+        "abstained": true,
+        "toolCalls": 2,
+        "estimatedInputTokens": 73,
+        "actualCost": 0
+      },
+      {
+        "id": "unrelated",
+        "expectedConflict": false,
+        "detected": false,
+        "citationsValid": true,
+        "abstained": true,
+        "toolCalls": 2,
+        "estimatedInputTokens": 84,
+        "actualCost": 0
+      },
+      {
+        "id": "pronoun-gap",
+        "expectedConflict": true,
+        "detected": false,
+        "citationsValid": true,
+        "abstained": true,
+        "toolCalls": 2,
+        "estimatedInputTokens": 77,
+        "actualCost": 0
+      },
+      {
+        "id": "paraphrase-gap",
+        "expectedConflict": true,
+        "detected": false,
+        "citationsValid": true,
+        "abstained": true,
+        "toolCalls": 2,
+        "estimatedInputTokens": 91,
+        "actualCost": 0
+      },
+      {
+        "id": "world-rule-gap",
+        "expectedConflict": true,
+        "detected": false,
+        "citationsValid": true,
+        "abstained": true,
+        "toolCalls": 2,
+        "estimatedInputTokens": 130,
+        "actualCost": 0
+      },
+      {
+        "id": "alias-gap",
+        "expectedConflict": true,
+        "detected": false,
+        "citationsValid": true,
+        "abstained": true,
+        "toolCalls": 2,
+        "estimatedInputTokens": 87,
+        "actualCost": 0
+      }
+    ]
+  },
+  "memory": {
+    "cases": 10,
+    "passed": 10,
+    "results": [
+      {
+        "id": "distant-entity",
+        "expectedIncluded": true,
+        "included": true,
+        "passed": true
+      },
+      {
+        "id": "object-keyword",
+        "expectedIncluded": true,
+        "included": true,
+        "passed": true
+      },
+      {
+        "id": "pending-exclusion",
+        "expectedIncluded": false,
+        "included": false,
+        "passed": true
+      },
+      {
+        "id": "dismissed-exclusion",
+        "expectedIncluded": false,
+        "included": false,
+        "passed": true
+      },
+      {
+        "id": "stale-exclusion",
+        "expectedIncluded": false,
+        "included": false,
+        "passed": true
+      },
+      {
+        "id": "before-validity",
+        "expectedIncluded": false,
+        "included": false,
+        "passed": true
+      },
+      {
+        "id": "valid-endpoint",
+        "expectedIncluded": true,
+        "included": true,
+        "passed": true
+      },
+      {
+        "id": "unknown-character",
+        "expectedIncluded": false,
+        "included": false,
+        "passed": true
+      },
+      {
+        "id": "known-character",
+        "expectedIncluded": true,
+        "included": true,
+        "passed": true
+      },
+      {
+        "id": "sibling-exclusion",
+        "expectedIncluded": false,
+        "included": false,
+        "passed": true
+      }
+    ]
+  }
+}

@@ -19,7 +19,7 @@ export function createMemoryUI({ getEditor, canMutate, onMutation, onError }) {
   const formDrafts = new Map();
   const stalePreview = () => { if (!$('memory-context').hidden) $('memory-context-status').textContent = 'Context preview is from an earlier draft, memory decision, or setting. Prepare context again for the next request. Captured sample context remains inspectable separately.'; };
   for (const id of ['memory-query', 'memory-time', 'memory-viewpoint', 'memory-budget']) $(id).addEventListener('input', stalePreview);
-  const safe = action => { try { if (!canMutate()) return; const message = action(); onMutation(); if (message) $('memory-status').textContent = message; } catch (error) { onError(error); } };
+  const safe = action => { try { if (!canMutate()) return; const message = action(); onMutation(); if (message) $('memory-status').textContent = message; if (!document.activeElement || document.activeElement === document.body) $('memory-status').focus(); } catch (error) { onError(error); } };
   const options = () => ({ query: $('memory-query').value, narrativeTime: Number($('memory-time').value), viewpoint: $('memory-viewpoint').value.trim(), budget: Number($('memory-budget').value) });
   function showEvidence(fact) {
     const workspace = getEditor().workspace, evidence = fact.evidence;

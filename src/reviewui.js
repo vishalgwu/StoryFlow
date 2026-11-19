@@ -6,7 +6,7 @@ export function createReviewUI({ getEditor, canMutate, onMutation, onStateChange
   let selectedRun = '', lastBranch = null, lastProject = null, lastCount = 0, chosenRevision = false;
   const drafts = new Map();
   const controller = new ReviewController(getEditor(), { onChange: () => { render(); onStateChange(); }, persist, onError });
-  const safe = action => { try { if (!canMutate()) return; action(); onMutation(); } catch (error) { onError(error); } };
+  const safe = action => { try { if (!canMutate()) return; action(); onMutation(); if (document.activeElement === document.body) $('review-status').focus(); } catch (error) { onError(error); } };
   const options = () => ({ baseRevisionId: $('review-revision').value, start: Number($('review-from').value), end: Number($('review-to').value), narrativeTime: Number($('review-time').value), viewpoint: $('review-viewpoint').value.trim(),
     maxCalls: Number($('review-calls').value), maxTokens: Number($('review-tokens').value), maxMs: Number($('review-ms').value), maxFindings: Number($('review-findings-limit').value), maxCost: 0 });
   $('review-revision').onchange = () => { chosenRevision = true; updateRange(); };

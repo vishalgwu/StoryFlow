@@ -10,7 +10,7 @@ export function createExplorer({ getEditor, canMutate, onMutation, onError }) {
   let comparisonChosen = false;
   for (const id of ['compare-left', 'compare-right']) $(id).onchange = () => { comparisonChosen = true; };
   const safe = action => {
-    try { if (!canMutate()) return; action(); onMutation(); }
+    try { if (!canMutate()) return; action(); onMutation(); if (document.activeElement === document.body) $('branch-select').focus(); }
     catch (error) { onError(error); }
   };
   const name = () => {

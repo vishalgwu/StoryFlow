@@ -22,8 +22,10 @@ jobs:
       - run: npm run check
       - run: npm run test:browser
       - uses: actions/upload-artifact@v7
-        if: failure()
+        if: always()
         with:
-          name: browser-test-results
-          path: test-results/
+          name: release-verification-evidence
+          path: |
+            test-results/
+            playwright-report/
           retention-days: 7

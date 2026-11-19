@@ -77,6 +77,12 @@ Every finding retains immutable source and target spans plus exact patch precond
 
 Checkpoints retain partial findings. Budget exhaustion may permit explicit approval of fresh partial results; canceled, failed, or reload-interrupted runs are read-only. Reload never resumes review automatically. Runs are capped at 100 and exceptions at 200 within the existing 20 MB workspace limit. Trace exports contain IDs/settings/operation counters and exit reasons without prose or patch text; portable project exports retain full evidence and decisions. Validation rejects malformed scope, citations, counters, patches, exceptions, and hidden rewrites. Any review mutation clears the immediate import undo backup.
 
-## Next milestone
+## Evaluation and local preview release (Phase 5)
 
-Phase 5 covers evaluation, accessibility, and release polish. Real providers, learned retrieval, and steering still require implementation and verified contracts before claiming the intended AI workflow or measured quality gains.
+`evaluation/run.mjs` exercises the real editor, memory/context and review modules against labelled synthetic cases. It compares a reproducible per-case report with the committed baseline; changes require explicit inspection before regeneration. The runner never applies repairs. `npm run check` includes this evaluation alongside syntax and Node regression checks.
+
+The UI adds section links, a skip link, in-app workflow/recovery guidance, focus recovery after dynamic decisions, and keyboard-accessible scrolling panels. Playwright uses the development-only axe checker in representative states and verifies keyboard navigation, 320px reflow with enlarged CSS fonts, and a complete portable-backup journey. CI retains audit/screenshot evidence on all runs. No runtime dependencies, backend, build step, or schema change are added. See the evaluation and accessibility documents for exact results and unperformed research.
+
+## Remaining product work
+
+The local-preview Phase 5 gate is complete. Real provider adapters, visual steering, learned retrieval, held-out quality evaluation, writer research, and manual assistive-technology checks remain open. They need their own implementation and evidence before claiming the intended AI-writing product is complete. Optional Phase 6 expansion remains evidence-driven rather than automatically started.
